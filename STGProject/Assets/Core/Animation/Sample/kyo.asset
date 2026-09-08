@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-6370214461615089458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c1db7c9f3c28d24f9062e34948ae33a, type: 3}
+  m_Name: test
+  m_EditorClassIdentifier: GenjitsuLAB.Core::GenjitsuLAB.Animation.AnimationClip
+  m_animId: 200
+  m_animName: test
+  m_isLoop: 0
+  m_elements:
+  - m_sprite: {fileID: 21300000, guid: e15419709418a984a99a90d3c3c732ef, type: 3}
+    m_duration: 5
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 21300000, guid: 5c7c96b976929074d9fc638a52c4282f, type: 3}
+    m_duration: 5
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 21300000, guid: de9d8f0cd9cc2db4db2f7fd059611281, type: 3}
+    m_duration: 5
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 21300000, guid: d2d124991f8890143a22271b292f97e1, type: 3}
+    m_duration: 5
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 21300000, guid: 04759a5d48e8da14287fc38206f6eb88, type: 3}
+    m_duration: 3
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 21300000, guid: 121663335e7fe9444a8ecd4d1e16ae8d, type: 3}
+    m_duration: 3
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 21300000, guid: 95e406fecc9888d4b89c1bcd4b7924d4, type: 3}
+    m_duration: 3
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 21300000, guid: b284f900e71fedd4691eee03e019a870, type: 3}
+    m_duration: 3
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 21300000, guid: cdd0f083d5f152f42b137cbf0db754bd, type: 3}
+    m_duration: 3
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 21300000, guid: 85c23f1c3b58c384ebb608a69aa0f6c9, type: 3}
+    m_duration: 8
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 21300000, guid: da240825185b2b94283918ec6803f827, type: 3}
+    m_duration: 5
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 21300000, guid: 87ec2914eb29b8a4a9ae4839b693e627, type: 3}
+    m_duration: 8
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 21300000, guid: 5f44d9f9923715f469fa954e0be4ad3a, type: 3}
+    m_duration: 5
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  m_totalTicks: 61
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da36d1ea8dcd428cb9de648e19bf2d43, type: 3}
+  m_Name: kyo
+  m_EditorClassIdentifier: GenjitsuLAB.Core::GenjitsuLAB.Animation.AnimationPack
+  m_clips:
+  - {fileID: -6370214461615089458}

@@ -1,0 +1,8 @@
+{
+    "name": "GenjitsuLAB.Animation.Editor.Tests",
+    "rootNamespace": "GenjitsuLAB.Animation.Editor.Tests",
+    "references": ["GenjitsuLAB.Core", "GenjitsuLAB.Animation.Editor"],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"],
+    "autoReferenced": false
+}

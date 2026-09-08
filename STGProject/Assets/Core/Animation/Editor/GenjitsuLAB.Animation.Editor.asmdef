@@ -1,0 +1,7 @@
+{
+    "name": "GenjitsuLAB.Animation.Editor",
+    "rootNamespace": "GenjitsuLAB.Animation.Editor",
+    "references": ["GenjitsuLAB.Core"],
+    "includePlatforms": ["Editor"],
+    "autoReferenced": true
+}
