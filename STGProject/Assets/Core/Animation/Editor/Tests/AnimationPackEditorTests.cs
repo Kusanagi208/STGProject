@@ -30,7 +30,10 @@ namespace GenjitsuLAB.Animation.Editor.Tests
         public void TearDown()
         {
             UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(m_path);
-            for (int i = 0; i < assets.Length; i++) if (assets[i] != null) Undo.ClearUndo(assets[i]);
+            for (int i = 0; i < assets.Length; i++) if (assets[i] != null)
+            {
+                Undo.ClearUndo(assets[i]);
+            }
             AssetDatabase.DeleteAsset(m_folder);
         }
 
@@ -233,6 +236,32 @@ namespace GenjitsuLAB.Animation.Editor.Tests
             finally { UnityEngine.Object.DestroyImmediate(sprite); UnityEngine.Object.DestroyImmediate(texture); }
         }
 
+        /// <summary>Ensures the preview grid stays in Unity world units and sprites scale by pixels per unit.</summary>
+        [Test]
+        public void PreviewGridAndSpriteSizeUseWorldUnits()
+        {
+            Assert.That(AnimationPackEditorWindow.GetGridMinorStep(100f), Is.EqualTo(0.2f).Within(0.00001f));
+            Assert.That(AnimationPackEditorWindow.GetGridMinorStep(10f), Is.EqualTo(2f).Within(0.00001f));
+            Assert.That(AnimationPackEditorWindow.GetGridMinorStep(1000f), Is.EqualTo(0.02f).Within(0.00001f));
+
+            var texture = new Texture2D(100, 50);
+            Sprite lowPpu = Sprite.Create(texture, new Rect(0, 0, 100, 50), new Vector2(0.5f, 0.5f), 50f);
+            Sprite highPpu = Sprite.Create(texture, new Rect(0, 0, 100, 50), new Vector2(0.5f, 0.5f), 100f);
+            try
+            {
+                Assert.That(lowPpu.bounds.size.x, Is.EqualTo(2f));
+                Assert.That(lowPpu.bounds.size.y, Is.EqualTo(1f));
+                Assert.That(highPpu.bounds.size.x, Is.EqualTo(1f));
+                Assert.That(highPpu.bounds.size.y, Is.EqualTo(0.5f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(lowPpu);
+                UnityEngine.Object.DestroyImmediate(highPpu);
+                UnityEngine.Object.DestroyImmediate(texture);
+            }
+        }
+
         /// <summary>Checks all reverse-drag directions produce the same positive-size box.</summary>
         [Test]
         public void ReverseDragNormalizesRectangles()
@@ -252,7 +281,10 @@ namespace GenjitsuLAB.Animation.Editor.Tests
             var clock = new AnimationPreviewClock();
             clock.Rebuild(clip);
             clock.Play();
-            for (int i = 0; i < 100; i++) clock.Advance(1.0 / 60, 60, 1, true);
+            for (int i = 0; i < 100; i++)
+            {
+                clock.Advance(1.0 / 60, 60, 1, true);
+            }
             using var recorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc", 16,
                 ProfilerRecorderOptions.CollectOnlyOnCurrentThread);
             var probe = new byte[1024];
@@ -262,7 +294,10 @@ namespace GenjitsuLAB.Animation.Editor.Tests
             Assert.That(recorder.Count, Is.GreaterThan(0), "A known allocation must be detected before trusting a zero result.");
             recorder.Reset();
             recorder.Start();
-            for (int i = 0; i < 10000; i++) clock.Advance(1.0 / 60, 60, 1, true);
+            for (int i = 0; i < 10000; i++)
+            {
+                clock.Advance(1.0 / 60, 60, 1, true);
+            }
             recorder.Stop();
             Assert.That(recorder.Count, Is.Zero);
         }

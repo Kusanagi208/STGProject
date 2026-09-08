@@ -7,6 +7,8 @@ namespace GenjitsuLAB.Animation.Editor
     public sealed partial class AnimationPackEditorWindow
     {
         private const float k_basePointsPerUnit = 100f;
+        private const float k_gridTargetPoints = 12f;
+        private const int k_gridMajorLineCount = 5;
         private const float k_handleSize = 7f;
         private static readonly string[] s_toolNames = { "Select", "Hit Box", "Hurt Box" };
         private PreviewRenderUtility m_preview;
@@ -47,10 +49,19 @@ namespace GenjitsuLAB.Animation.Editor
                             m_lastUpdate = EditorApplication.timeSinceStartup;
                         }
                     }
-                    if (GUILayout.Button("Stop", EditorStyles.toolbarButton)) { m_clock.Stop(); SyncElementToTick(); }
+                    if (GUILayout.Button("Stop", EditorStyles.toolbarButton))
+                    {
+                        m_clock.Stop();
+                        SyncElementToTick();
+                    }
                 }
                 GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Reset View", EditorStyles.toolbarButton)) { m_size = 1; m_tickWidth = 20; m_timelineScroll = Vector2.zero; }
+                if (GUILayout.Button("Reset View", EditorStyles.toolbarButton))
+                {
+                    m_size = 1;
+                    m_tickWidth = 20;
+                    m_timelineScroll = Vector2.zero;
+                }
             }
             float labelWidth = EditorGUIUtility.labelWidth;
             using (new EditorGUI.DisabledScope(m_boxDragging))
@@ -79,7 +90,10 @@ namespace GenjitsuLAB.Animation.Editor
 
         private void EnsurePreview()
         {
-            if (m_preview != null) return;
+            if (m_preview != null)
+            {
+                return;
+            }
             m_preview = new PreviewRenderUtility();
             Camera camera = m_preview.camera;
             camera.orthographic = true;
@@ -105,7 +119,10 @@ namespace GenjitsuLAB.Animation.Editor
             m_preview = null;
             m_previewSprite = null;
             m_previewTexture = null;
-            if (m_spriteMaterial != null) DestroyImmediate(m_spriteMaterial);
+            if (m_spriteMaterial != null)
+            {
+                DestroyImmediate(m_spriteMaterial);
+            }
             m_spriteMaterial = null;
         }
 
@@ -114,7 +131,10 @@ namespace GenjitsuLAB.Animation.Editor
 
         private void DrawPreview(Rect viewport)
         {
-            if (viewport.width < 1 || viewport.height < 1) return;
+            if (viewport.width < 1 || viewport.height < 1)
+            {
+                return;
+            }
             m_previewViewport = viewport;
             float pointsPerUnit = k_basePointsPerUnit * m_size;
             AnimationElement element = CurrentElement;
@@ -132,6 +152,7 @@ namespace GenjitsuLAB.Animation.Editor
                 Rect local = new Rect(0, 0, viewport.width, viewport.height);
                 Handles.BeginGUI();
                 Color oldColor = Handles.color;
+                DrawWorldGrid(local, pointsPerUnit);
                 Handles.color = new Color(1, 1, 1, 0.18f);
                 Handles.DrawLine(new Vector3(0, local.center.y), new Vector3(local.width, local.center.y));
                 Handles.DrawLine(new Vector3(local.center.x, 0), new Vector3(local.center.x, local.height));
@@ -140,19 +161,83 @@ namespace GenjitsuLAB.Animation.Editor
                 Handles.DrawLine(local.center - Vector2.up * 6, local.center + Vector2.up * 6);
                 DrawBoxes(element?.HitBoxes, false, local, pointsPerUnit);
                 DrawBoxes(element?.HurtBoxes, true, local, pointsPerUnit);
-                if (m_boxDragging && m_boxCreating) DrawBox(m_dragDraft, m_boxIsHurt, true, local, pointsPerUnit);
+                if (m_boxDragging && m_boxCreating)
+                {
+                    DrawBox(m_dragDraft, m_boxIsHurt, true, local, pointsPerUnit);
+                }
                 Handles.color = oldColor;
                 Handles.EndGUI();
                 GUI.Label(new Rect(local.center.x + 8, local.center.y + 4, 110, 20), "(0, 0) pivot", EditorStyles.whiteMiniLabel);
-                if (element?.Sprite == null) GUI.Label(new Rect(0, 8, local.width, 22), "No Sprite — boxes can still be edited", m_centerLabel);
+                if (element?.Sprite == null)
+                {
+                    GUI.Label(new Rect(0, 8, local.width, 22), "No Sprite — boxes can still be edited", m_centerLabel);
+                }
                 GUI.EndClip();
             }
             HandleBoxInput(viewport, pointsPerUnit);
         }
 
+        /// <summary>Draws an adaptive world-unit grid aligned to the Sprite pivot at (0, 0).</summary>
+        private static void DrawWorldGrid(Rect viewport, float pointsPerUnit)
+        {
+            float minorStep = GetGridMinorStep(pointsPerUnit);
+            float majorStep = minorStep * k_gridMajorLineCount;
+            Vector2 min = AnimationPreviewCoordinates.ToLocal(viewport.min, viewport, pointsPerUnit);
+            Vector2 max = AnimationPreviewCoordinates.ToLocal(viewport.max, viewport, pointsPerUnit);
+            float minX = Mathf.Min(min.x, max.x);
+            float maxX = Mathf.Max(min.x, max.x);
+            float minY = Mathf.Min(min.y, max.y);
+            float maxY = Mathf.Max(min.y, max.y);
+            int firstX = Mathf.CeilToInt(minX / minorStep);
+            int lastX = Mathf.FloorToInt(maxX / minorStep);
+            int firstY = Mathf.CeilToInt(minY / minorStep);
+            int lastY = Mathf.FloorToInt(maxY / minorStep);
+            Color minorColor = new Color(1f, 1f, 1f, 0.045f);
+            Color majorColor = new Color(1f, 1f, 1f, 0.1f);
+
+            for (int i = firstX; i <= lastX; i++)
+            {
+                float worldX = i * minorStep;
+                if (Mathf.Approximately(worldX, 0f))
+                {
+                    continue;
+                }
+                Handles.color = IsMajorGridLine(i) ? majorColor : minorColor;
+                float screenX = AnimationPreviewCoordinates.ToScreen(new Vector2(worldX, 0f), viewport, pointsPerUnit).x;
+                Handles.DrawLine(new Vector3(screenX, viewport.yMin), new Vector3(screenX, viewport.yMax));
+            }
+
+            for (int i = firstY; i <= lastY; i++)
+            {
+                float worldY = i * minorStep;
+                if (Mathf.Approximately(worldY, 0f))
+                {
+                    continue;
+                }
+                Handles.color = IsMajorGridLine(i) ? majorColor : minorColor;
+                float screenY = AnimationPreviewCoordinates.ToScreen(new Vector2(0f, worldY), viewport, pointsPerUnit).y;
+                Handles.DrawLine(new Vector3(viewport.xMin, screenY), new Vector3(viewport.xMax, screenY));
+            }
+        }
+
+        /// <summary>Gets a SceneView-style 1/2/5 adaptive grid interval in local Unity units.</summary>
+        internal static float GetGridMinorStep(float pointsPerUnit)
+        {
+            float targetUnits = k_gridTargetPoints / Mathf.Max(0.0001f, pointsPerUnit);
+            float power = Mathf.Pow(10f, Mathf.Floor(Mathf.Log10(targetUnits)));
+            float normalized = targetUnits / power;
+            float multiplier = normalized <= 1f ? 1f : normalized <= 2f ? 2f : normalized <= 5f ? 5f : 10f;
+            return multiplier * power;
+        }
+
+        private static bool IsMajorGridLine(int index) => index % k_gridMajorLineCount == 0;
+
         private void DrawBoxes(IReadOnlyList<Rect> boxes, bool hurt, Rect viewport, float pointsPerUnit)
         {
-            if (boxes == null) return;
+            if (boxes == null)
+            {
+                return;
+            }
             for (int i = 0; i < boxes.Count; i++)
             {
                 bool selected = m_boxIsHurt == hurt && m_boxIndex == i;
@@ -172,7 +257,10 @@ namespace GenjitsuLAB.Animation.Editor
             m_rectangleVertices[2] = new Vector3(screen.xMax, screen.yMax);
             m_rectangleVertices[3] = new Vector3(screen.xMin, screen.yMax);
             Handles.DrawSolidRectangleWithOutline(m_rectangleVertices, fill, selected ? Color.white : border);
-            if (!selected || !CanEdit) return;
+            if (!selected || !CanEdit)
+            {
+                return;
+            }
             for (int i = 0; i < 8; i++)
             {
                 Vector2 point = HandlePoint(screen, i);
@@ -219,7 +307,10 @@ namespace GenjitsuLAB.Animation.Editor
                 current.Use();
                 return;
             }
-            if (!CanEdit || CurrentElement == null) return;
+            if (!CanEdit || CurrentElement == null)
+            {
+                return;
+            }
             if (current.type == EventType.MouseDown && current.button == 0 && viewport.Contains(current.mousePosition))
             {
                 GUI.FocusControl(null);
@@ -250,20 +341,41 @@ namespace GenjitsuLAB.Animation.Editor
                 current.Use();
                 Repaint();
             }
-            if (!m_boxDragging || GUIUtility.hotControl != control) return;
+            if (!m_boxDragging || GUIUtility.hotControl != control)
+            {
+                return;
+            }
             if (current.type == EventType.MouseDrag)
             {
                 Vector2 point = AnimationPreviewCoordinates.ToLocal(current.mousePosition, m_dragViewport, m_dragPointsPerUnit);
-                if (m_boxCreating) m_dragDraft = AnimationPreviewCoordinates.FromCorners(m_dragStart, point);
-                else if (m_dragHandle < 0) m_dragDraft = new Rect(m_dragOriginal.position + point - m_dragStart, m_dragOriginal.size);
+                if (m_boxCreating)
+                {
+                    m_dragDraft = AnimationPreviewCoordinates.FromCorners(m_dragStart, point);
+                }
+                else if (m_dragHandle < 0)
+                {
+                    m_dragDraft = new Rect(m_dragOriginal.position + point - m_dragStart, m_dragOriginal.size);
+                }
                 else
                 {
                     Vector2 min = m_dragOriginal.min;
                     Vector2 max = m_dragOriginal.max;
-                    if (m_dragHandle == 0 || m_dragHandle == 6 || m_dragHandle == 7) min.x = point.x;
-                    if (m_dragHandle == 2 || m_dragHandle == 3 || m_dragHandle == 4) max.x = point.x;
-                    if (m_dragHandle == 0 || m_dragHandle == 1 || m_dragHandle == 2) max.y = point.y;
-                    if (m_dragHandle == 4 || m_dragHandle == 5 || m_dragHandle == 6) min.y = point.y;
+                    if (m_dragHandle == 0 || m_dragHandle == 6 || m_dragHandle == 7)
+                    {
+                        min.x = point.x;
+                    }
+                    if (m_dragHandle == 2 || m_dragHandle == 3 || m_dragHandle == 4)
+                    {
+                        max.x = point.x;
+                    }
+                    if (m_dragHandle == 0 || m_dragHandle == 1 || m_dragHandle == 2)
+                    {
+                        max.y = point.y;
+                    }
+                    if (m_dragHandle == 4 || m_dragHandle == 5 || m_dragHandle == 6)
+                    {
+                        min.y = point.y;
+                    }
                     m_dragDraft = AnimationPreviewCoordinates.FromCorners(min, max);
                 }
                 current.Use();
@@ -285,7 +397,10 @@ namespace GenjitsuLAB.Animation.Editor
                 Rect screen = BoxScreenRect(selected[m_boxIndex], viewport, pointsPerUnit);
                 for (int i = 0; i < 8; i++)
                 {
-                    if ((mouse - HandlePoint(screen, i)).sqrMagnitude > 64) continue;
+                    if ((mouse - HandlePoint(screen, i)).sqrMagnitude > 64)
+                    {
+                        continue;
+                    }
                     m_dragHandle = i;
                     m_dragOriginal = selected[m_boxIndex];
                     return true;
@@ -303,7 +418,10 @@ namespace GenjitsuLAB.Animation.Editor
                 IReadOnlyList<Rect> boxes = kind == 1 ? element.HurtBoxes : element.HitBoxes;
                 for (int i = boxes.Count - 1; i >= 0; i--)
                 {
-                    if (!BoxScreenRect(boxes[i], viewport, pointsPerUnit).Contains(mouse)) continue;
+                    if (!BoxScreenRect(boxes[i], viewport, pointsPerUnit).Contains(mouse))
+                    {
+                        continue;
+                    }
                     m_boxIndex = i;
                     m_boxIsHurt = kind == 1;
                     m_dragOriginal = boxes[i];
@@ -324,7 +442,10 @@ namespace GenjitsuLAB.Animation.Editor
                 {
                     Undo.IncrementCurrentGroup();
                     Undo.SetCurrentGroupName(m_boxCreating ? "Create Animation Box" : "Transform Animation Box");
-                    if (m_boxCreating) m_boxIndex = boxes.arraySize++;
+                    if (m_boxCreating)
+                    {
+                        m_boxIndex = boxes.arraySize++;
+                    }
                     if (m_boxIndex >= 0 && m_boxIndex < boxes.arraySize)
                         boxes.GetArrayElementAtIndex(m_boxIndex).rectValue = m_dragDraft;
                     m_clipObject.ApplyModifiedProperties();
@@ -336,7 +457,10 @@ namespace GenjitsuLAB.Animation.Editor
 
         private void CancelBoxDrag()
         {
-            if (m_boxDragging && GUIUtility.hotControl == m_boxControl) GUIUtility.hotControl = 0;
+            if (m_boxDragging && GUIUtility.hotControl == m_boxControl)
+            {
+                GUIUtility.hotControl = 0;
+            }
             m_boxDragging = false;
             m_boxCreating = false;
         }
@@ -347,11 +471,20 @@ namespace GenjitsuLAB.Animation.Editor
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("<", GUILayout.Width(25))) Seek(m_clock.Tick - 1);
+                    if (GUILayout.Button("<", GUILayout.Width(25)))
+                    {
+                        Seek(m_clock.Tick - 1);
+                    }
                     EditorGUI.BeginChangeCheck();
                     int tick = EditorGUILayout.DelayedIntField(m_clock.Tick, GUILayout.Width(65));
-                    if (EditorGUI.EndChangeCheck()) Seek(tick);
-                    if (GUILayout.Button(">", GUILayout.Width(25))) Seek(m_clock.Tick + 1);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        Seek(tick);
+                    }
+                    if (GUILayout.Button(">", GUILayout.Width(25)))
+                    {
+                        Seek(m_clock.Tick + 1);
+                    }
                     GUILayout.Label("tick", GUILayout.Width(25));
                     GUILayout.FlexibleSpace();
                     GUILayout.Label("Zoom", GUILayout.Width(36));
@@ -379,7 +512,10 @@ namespace GenjitsuLAB.Animation.Editor
                 {
                     float start = m_clock.Start(i) * m_tickWidth;
                     float end = (i + 1 < m_elementLabels.Length ? m_clock.Start(i + 1) : m_clock.TotalTicks) * m_tickWidth;
-                    if (end < visibleStart || start > visibleEnd) continue;
+                    if (end < visibleStart || start > visibleEnd)
+                    {
+                        continue;
+                    }
                     Rect segment = new Rect(start + 1, 25, Mathf.Max(1, end - start - 2), 48);
                     EditorGUI.DrawRect(segment, i == m_elementIndex ? new Color(0.2f, 0.45f, 0.7f) : new Color(0.26f, 0.28f, 0.32f));
                     GUI.Label(segment, m_elementLabels[i], EditorStyles.whiteMiniLabel);

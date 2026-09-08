@@ -44,14 +44,21 @@ namespace GenjitsuLAB.Animation.Editor
             var window = GetWindow<AnimationPackEditorWindow>();
             window.titleContent = new GUIContent("Animation Pack");
             window.Show();
-            if (Selection.activeObject is AnimationPack pack) window.SetPack(pack);
+            if (Selection.activeObject is AnimationPack pack)
+            {
+                window.SetPack(pack);
+            }
         }
 
         /// <summary>Routes double-clicks on AnimationPack assets to this editor.</summary>
         [OnOpenAsset]
         private static bool OnOpenAsset(int instanceId, int line)
         {
-            if (EditorUtility.EntityIdToObject(instanceId) is not AnimationPack pack) return false;
+            if (EditorUtility.EntityIdToObject(instanceId) is not AnimationPack pack)
+            {
+                return false;
+            }
+
             var window = GetWindow<AnimationPackEditorWindow>();
             window.SetPack(pack);
             window.Show();
@@ -101,7 +108,11 @@ namespace GenjitsuLAB.Animation.Editor
 
         private void SetPack(AnimationPack pack)
         {
-            if (m_pack == pack && m_packObject != null) return;
+            if (m_pack == pack && m_packObject != null)
+            {
+                return;
+            }
+
             CancelBoxDrag();
             AnimationPackAuthoring.Save(m_pack);
             m_pack = pack;
@@ -127,14 +138,22 @@ namespace GenjitsuLAB.Animation.Editor
             m_clipObject?.Dispose();
             m_clipObject = m_clip == null ? null : new SerializedObject(m_clip);
             m_elementList = null;
-            if (m_clipObject != null) BuildElementList();
+            if (m_clipObject != null)
+            {
+                BuildElementList();
+            }
             m_packObject?.Update();
             RefreshTiming();
             if (m_clipList != null)
             {
                 m_clipList.index = -1;
                 for (int i = 0; i < m_pack.Clips.Count; i++)
-                    if (m_pack.Clips[i] == clip) m_clipList.index = i;
+                {
+                    if (m_pack.Clips[i] == clip)
+                    {
+                        m_clipList.index = i;
+                    }
+                }
             }
             GUI.FocusControl(null);
             Repaint();
@@ -161,7 +180,10 @@ namespace GenjitsuLAB.Animation.Editor
             m_clock.Rebuild(m_clip);
             m_elementIndex = m_clip == null || m_clip.Elements.Count == 0 ? -1 :
                 Mathf.Clamp(m_elementIndex, 0, m_clip.Elements.Count - 1);
-            if (m_elementList != null) m_elementList.index = m_elementIndex;
+            if (m_elementList != null)
+            {
+                m_elementList.index = m_elementIndex;
+            }
             int count = m_pack == null ? 0 : m_pack.Clips.Count;
             m_clipLabels = new string[count];
             for (int i = 0; i < count; i++)
@@ -185,7 +207,10 @@ namespace GenjitsuLAB.Animation.Editor
             m_clock.Pause();
             // Restored sub-assets are resolved from the pack's serialized references.
             if (m_pack != null && (m_clip == null || !ContainsClip(m_clip)))
+            {
                 m_clip = m_pack.Clips.Count > 0 ? m_pack.Clips[0] : null;
+            }
+
             m_boxIndex = -1;
             Rebind();
             SyncElementToTick();
@@ -194,16 +219,32 @@ namespace GenjitsuLAB.Animation.Editor
 
         private bool ContainsClip(AnimationClip clip)
         {
-            if (m_pack == null) return false;
+            if (m_pack == null)
+            {
+                return false;
+            }
             for (int i = 0; i < m_pack.Clips.Count; i++)
-                if (m_pack.Clips[i] == clip) return true;
+            {
+                if (m_pack.Clips[i] == clip)
+                {
+                    return true;
+                }
+            }
             return false;
         }
 
         private void OnProjectChanged()
         {
-            if (m_boxDragging) CancelBoxDrag();
-            if (!ContainsClip(m_clip)) m_clip = null;
+            if (m_boxDragging)
+            {
+                CancelBoxDrag();
+            }
+
+            if (!ContainsClip(m_clip))
+            {
+                m_clip = null;
+            }
+
             m_clock.Pause();
             Rebind();
             SyncElementToTick();
@@ -225,9 +266,15 @@ namespace GenjitsuLAB.Animation.Editor
         private void SyncElementToTick()
         {
             int element = m_clock.Element;
-            if (element != m_elementIndex) m_boxIndex = -1;
+            if (element != m_elementIndex)
+            {
+                m_boxIndex = -1;
+            }
             m_elementIndex = element;
-            if (m_elementList != null) m_elementList.index = element;
+            if (m_elementList != null)
+            {
+                m_elementList.index = element;
+            }
         }
 
         private void Seek(int tick)
@@ -244,8 +291,14 @@ namespace GenjitsuLAB.Animation.Editor
         {
             m_centerLabel ??= new GUIStyle(EditorStyles.centeredGreyMiniLabel) { alignment = TextAnchor.MiddleCenter };
             HandleSaveShortcut();
-            if (m_pack == null && m_packObject != null) Rebind();
-            if (m_clip == null && m_clipObject != null) Rebind();
+            if (m_pack == null && m_packObject != null)
+            {
+                Rebind();
+            }
+            if (m_clip == null && m_clipObject != null)
+            {
+                Rebind();
+            }
             float width = position.width;
             m_leftWidth = Mathf.Clamp(m_leftWidth, 200, width - m_rightWidth - 370);
             m_rightWidth = Mathf.Clamp(m_rightWidth, 300, width - m_leftWidth - 370);
@@ -293,10 +346,16 @@ namespace GenjitsuLAB.Animation.Editor
                 GUIUtility.hotControl = control;
                 current.Use();
             }
-            if (GUIUtility.hotControl != control || m_splitter == 0) return;
+            if (GUIUtility.hotControl != control || m_splitter == 0)
+            {
+                return;
+            }
             if (current.type == EventType.MouseDrag)
             {
-                if (m_splitter == 1) m_leftWidth += current.delta.x;
+                if (m_splitter == 1)
+                {
+                    m_leftWidth += current.delta.x;
+                }
                 else m_rightWidth -= current.delta.x;
                 current.Use();
                 Repaint();
@@ -313,13 +372,26 @@ namespace GenjitsuLAB.Animation.Editor
         {
             GUILayout.Label("AnimationPack", EditorStyles.boldLabel);
             AnimationPack pack = (AnimationPack)EditorGUILayout.ObjectField(m_pack, typeof(AnimationPack), false);
-            if (pack != m_pack) { SetPack(pack); GUIUtility.ExitGUI(); }
+            if (pack != m_pack)
+            {
+                SetPack(pack);
+                GUIUtility.ExitGUI();
+            }
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
-                if (GUILayout.Button("New", EditorStyles.toolbarButton)) CreatePack();
-                if (GUILayout.Button("Open", EditorStyles.toolbarButton)) OpenPack();
+                if (GUILayout.Button("New", EditorStyles.toolbarButton))
+                {
+                    CreatePack();
+                }
+                if (GUILayout.Button("Open", EditorStyles.toolbarButton))
+                {
+                    OpenPack();
+                }
                 using (new EditorGUI.DisabledScope(m_pack == null))
-                    if (GUILayout.Button("Save", EditorStyles.toolbarButton)) AnimationPackAuthoring.Save(m_pack);
+                    if (GUILayout.Button("Save", EditorStyles.toolbarButton))
+                    {
+                        AnimationPackAuthoring.Save(m_pack);
+                    }
             }
             if (m_packObject == null)
             {
@@ -330,13 +402,19 @@ namespace GenjitsuLAB.Animation.Editor
             m_leftScroll = EditorGUILayout.BeginScrollView(m_leftScroll);
             m_clipList.DoLayoutList();
             EditorGUILayout.EndScrollView();
-            if (m_packObject.ApplyModifiedProperties()) RefreshTiming();
+            if (m_packObject.ApplyModifiedProperties())
+            {
+                RefreshTiming();
+            }
         }
 
         private void CreatePack()
         {
             string path = EditorUtility.SaveFilePanelInProject("New AnimationPack", "AnimationPack", "asset", "Choose an asset path.");
-            if (string.IsNullOrEmpty(path)) return;
+            if (string.IsNullOrEmpty(path))
+            {
+                return;
+            }
             // Never overwrite an existing user-owned asset.
             path = AssetDatabase.GenerateUniqueAssetPath(path);
             var pack = CreateInstance<AnimationPack>();
@@ -350,10 +428,16 @@ namespace GenjitsuLAB.Animation.Editor
         private void OpenPack()
         {
             string path = EditorUtility.OpenFilePanel("Open AnimationPack", Application.dataPath, "asset");
-            if (string.IsNullOrEmpty(path)) return;
+            if (string.IsNullOrEmpty(path))
+            {
+                return;
+            }
             string relative = FileUtil.GetProjectRelativePath(path);
             var pack = AssetDatabase.LoadAssetAtPath<AnimationPack>(relative);
-            if (pack == null) EditorUtility.DisplayDialog("AnimationPack", "Choose an AnimationPack inside this project's Assets folder.", "OK");
+            if (pack == null)
+            {
+                EditorUtility.DisplayDialog("AnimationPack", "Choose an AnimationPack inside this project's Assets folder.", "OK");
+            }
             else SetPack(pack);
             GUIUtility.ExitGUI();
         }
@@ -364,13 +448,19 @@ namespace GenjitsuLAB.Animation.Editor
             m_clipList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Clips");
             m_clipList.drawElementCallback = (rect, index, active, focused) =>
             {
-                if (index < m_clipLabels.Length) EditorGUI.LabelField(rect, m_clipLabels[index]);
+                if (index < m_clipLabels.Length)
+                {
+                    EditorGUI.LabelField(rect, m_clipLabels[index]);
+                }
             };
             m_clipList.onSelectCallback = list =>
             {
                 if (list.index >= 0 && list.index < m_pack.Clips.Count)
                 {
-                    if (m_clip != m_pack.Clips[list.index]) SelectClip(m_pack.Clips[list.index]);
+                    if (m_clip != m_pack.Clips[list.index])
+                    {
+                        SelectClip(m_pack.Clips[list.index]);
+                    }
                 }
             };
             m_clipList.onAddCallback = list =>
@@ -384,7 +474,10 @@ namespace GenjitsuLAB.Animation.Editor
             {
                 int index = list.index;
                 AnimationClip clip = m_pack.Clips[index];
-                if (!EditorUtility.DisplayDialog("Delete Clip", $"Delete embedded clip '{clip.AnimName}'? This can be undone.", "Delete", "Cancel")) return;
+                if (!EditorUtility.DisplayDialog("Delete Clip", $"Delete embedded clip '{clip.AnimName}'? This can be undone.", "Delete", "Cancel"))
+                {
+                    return;
+                }
                 AnimationPackAuthoring.DeleteClip(m_pack, clip);
                 SelectClip(m_pack.Clips.Count == 0 ? null : m_pack.Clips[Mathf.Min(index, m_pack.Clips.Count - 1)]);
                 GUIUtility.ExitGUI();
@@ -393,10 +486,16 @@ namespace GenjitsuLAB.Animation.Editor
             {
                 m_packObject.ApplyModifiedProperties();
                 RefreshTiming();
-                for (int i = 0; i < m_pack.Clips.Count; i++) if (m_pack.Clips[i] == m_clip) list.index = i;
+                for (int i = 0; i < m_pack.Clips.Count; i++) if (m_pack.Clips[i] == m_clip)
+                {
+                    list.index = i;
+                }
             };
             m_clipList.index = -1;
-            for (int i = 0; i < m_pack.Clips.Count; i++) if (m_pack.Clips[i] == m_clip) m_clipList.index = i;
+            for (int i = 0; i < m_pack.Clips.Count; i++) if (m_pack.Clips[i] == m_clip)
+            {
+                m_clipList.index = i;
+            }
         }
     }
 }

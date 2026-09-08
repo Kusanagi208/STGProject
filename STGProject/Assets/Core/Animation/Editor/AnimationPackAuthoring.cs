@@ -22,11 +22,17 @@ namespace GenjitsuLAB.Animation.Editor
         /// <summary>Finds conflicting IDs without modifying existing assets.</summary>
         internal static bool HasId(AnimationPack pack, int id, AnimationClip except = null)
         {
-            if (pack == null) return false;
+            if (pack == null)
+            {
+                return false;
+            }
             for (int i = 0; i < pack.Clips.Count; i++)
             {
                 AnimationClip clip = pack.Clips[i];
-                if (clip != null && clip != except && clip.AnimId == id) return true;
+                if (clip != null && clip != except && clip.AnimId == id)
+                {
+                    return true;
+                }
             }
             return false;
         }
@@ -38,7 +44,10 @@ namespace GenjitsuLAB.Animation.Editor
                 throw new ArgumentException("Save the AnimationPack before adding a clip.", nameof(pack));
 
             int id = 0;
-            while (HasId(pack, id)) id++;
+            while (HasId(pack, id))
+            {
+                id++;
+            }
             Undo.IncrementCurrentGroup();
             int group = Undo.GetCurrentGroup();
             Undo.SetCurrentGroupName("Add Animation Clip");
@@ -70,7 +79,10 @@ namespace GenjitsuLAB.Animation.Editor
         /// <summary>Deletes only owned sub-assets, including all references in this pack.</summary>
         internal static bool DeleteClip(AnimationPack pack, AnimationClip clip)
         {
-            if (!Owns(pack, clip)) return false;
+            if (!Owns(pack, clip))
+            {
+                return false;
+            }
             Undo.IncrementCurrentGroup();
             int group = Undo.GetCurrentGroup();
             Undo.SetCurrentGroupName("Delete Animation Clip");
@@ -80,7 +92,10 @@ namespace GenjitsuLAB.Animation.Editor
                 SerializedProperty clips = serialized.FindProperty("m_clips");
                 for (int i = clips.arraySize - 1; i >= 0; i--)
                 {
-                    if (clips.GetArrayElementAtIndex(i).objectReferenceValue != clip) continue;
+                    if (clips.GetArrayElementAtIndex(i).objectReferenceValue != clip)
+                    {
+                        continue;
+                    }
                     clips.GetArrayElementAtIndex(i).objectReferenceValue = null;
                     clips.DeleteArrayElementAtIndex(i);
                 }
@@ -96,7 +111,10 @@ namespace GenjitsuLAB.Animation.Editor
         /// <summary>Saves this asset file, including owned dirty clips, without saving unrelated assets.</summary>
         internal static void Save(AnimationPack pack)
         {
-            if (pack == null || !AssetDatabase.Contains(pack)) return;
+            if (pack == null || !AssetDatabase.Contains(pack))
+            {
+                return;
+            }
             // Saving a sub-asset writes the containing asset file as well.
             for (int i = 0; i < pack.Clips.Count; i++)
             {
@@ -155,7 +173,10 @@ namespace GenjitsuLAB.Animation.Editor
         internal void Rebuild(AnimationClip clip)
         {
             m_count = clip == null ? 0 : clip.Elements.Count;
-            if (m_starts.Length < m_count) m_starts = new int[m_count];
+            if (m_starts.Length < m_count)
+            {
+                m_starts = new int[m_count];
+            }
             long total = 0;
             for (int i = 0; i < m_count; i++)
             {
@@ -164,7 +185,10 @@ namespace GenjitsuLAB.Animation.Editor
             }
             TotalTicks = (int)Math.Min(total, int.MaxValue);
             Tick = Mathf.Clamp(Tick, 0, Mathf.Max(0, TotalTicks - 1));
-            if (TotalTicks == 0) Stop();
+            if (TotalTicks == 0)
+            {
+                Stop();
+            }
         }
 
         /// <summary>Gets a cached element start tick.</summary>
@@ -173,13 +197,19 @@ namespace GenjitsuLAB.Animation.Editor
         /// <summary>Locates an element using the half-open interval [start, end).</summary>
         internal int FindElement(int tick)
         {
-            if (m_count == 0) return -1;
+            if (m_count == 0)
+            {
+                return -1;
+            }
             int low = 0;
             int high = m_count - 1;
             while (low < high)
             {
                 int middle = low + (high - low + 1) / 2;
-                if (m_starts[middle] <= tick) low = middle;
+                if (m_starts[middle] <= tick)
+                {
+                    low = middle;
+                }
                 else high = middle - 1;
             }
             return low;
@@ -190,24 +220,53 @@ namespace GenjitsuLAB.Animation.Editor
         /// <summary>Stops and rewinds the preview.</summary>
         internal void Stop() { Tick = 0; m_fraction = 0; IsPaused = false; IsPlaying = false; }
         /// <summary>Toggles pause without rewinding.</summary>
-        internal void TogglePause() { if (IsPlaying) IsPaused = !IsPaused; }
+        internal void TogglePause()
+        {
+            if (IsPlaying)
+            {
+                IsPaused = !IsPaused;
+            }
+        }
         /// <summary>Pauses an active preview before authoring.</summary>
-        internal void Pause() { if (IsPlaying) IsPaused = true; }
+        internal void Pause()
+        {
+            if (IsPlaying)
+            {
+                IsPaused = true;
+            }
+        }
         /// <summary>Scrubs to a valid tick and clears any partial tick.</summary>
         internal void Seek(int tick) { Pause(); Tick = Mathf.Clamp(tick, 0, Mathf.Max(0, TotalTicks - 1)); m_fraction = 0; }
 
         /// <summary>Advances from elapsed editor time without a per-tick loop or allocations.</summary>
         internal bool Advance(double seconds, double tickRate, double speed, bool loop)
         {
-            if (!IsPlaying || IsPaused || seconds <= 0 || TotalTicks == 0) return false;
+            if (!IsPlaying || IsPaused || seconds <= 0 || TotalTicks == 0)
+            {
+                return false;
+            }
             double elapsed = m_fraction + seconds * tickRate * speed;
-            if (double.IsNaN(elapsed) || double.IsInfinity(elapsed)) return false;
+            if (double.IsNaN(elapsed) || double.IsInfinity(elapsed))
+            {
+                return false;
+            }
             double whole = Math.Floor(elapsed);
             m_fraction = elapsed - whole;
-            if (whole < 1) return false;
+            if (whole < 1)
+            {
+                return false;
+            }
             double next = Tick + whole;
-            if (loop) Tick = (int)(next % TotalTicks);
-            else if (next >= TotalTicks) { Tick = TotalTicks - 1; IsPlaying = false; m_fraction = 0; }
+            if (loop)
+            {
+                Tick = (int)(next % TotalTicks);
+            }
+            else if (next >= TotalTicks)
+            {
+                Tick = TotalTicks - 1;
+                IsPlaying = false;
+                m_fraction = 0;
+            }
             else Tick = (int)next;
             return true;
         }

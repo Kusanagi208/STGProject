@@ -22,7 +22,10 @@ namespace GenjitsuLAB.Animation.Editor
             };
             m_elementList.onRemoveCallback = list =>
             {
-                if (list.index < 0) return;
+                if (list.index < 0)
+                {
+                    return;
+                }
                 m_clock.Pause();
                 CancelBoxDrag();
                 m_clipObject.FindProperty("m_elements").DeleteArrayElementAtIndex(list.index);
@@ -54,7 +57,10 @@ namespace GenjitsuLAB.Animation.Editor
         private void DrawElementRow(Rect rect, int index, bool active, bool focused)
         {
             SerializedProperty elements = m_clipObject.FindProperty("m_elements");
-            if (index >= elements.arraySize) return;
+            if (index >= elements.arraySize)
+            {
+                return;
+            }
             SerializedProperty element = elements.GetArrayElementAtIndex(index);
             rect.y += 2;
             rect.height = EditorGUIUtility.singleLineHeight;
@@ -66,7 +72,10 @@ namespace GenjitsuLAB.Animation.Editor
             SerializedProperty duration = element.FindPropertyRelative("m_duration");
             EditorGUI.BeginChangeCheck();
             int value = EditorGUI.DelayedIntField(new Rect(rect.x + 122, rect.y, Mathf.Max(45, rect.width - 122), rect.height), duration.intValue);
-            if (EditorGUI.EndChangeCheck()) duration.intValue = Mathf.Max(1, value);
+            if (EditorGUI.EndChangeCheck())
+            {
+                duration.intValue = Mathf.Max(1, value);
+            }
         }
 
         private void DrawInspector()
@@ -78,8 +87,14 @@ namespace GenjitsuLAB.Animation.Editor
                 return;
             }
             bool editable = CanEdit;
-            if (!editable) EditorGUILayout.HelpBox("External Clip: preview only. This editor does not modify or move external assets.", MessageType.Warning);
-            if (m_clipObject.UpdateIfRequiredOrScript()) RefreshTiming();
+            if (!editable)
+            {
+                EditorGUILayout.HelpBox("External Clip: preview only. This editor does not modify or move external assets.", MessageType.Warning);
+            }
+            if (m_clipObject.UpdateIfRequiredOrScript())
+            {
+                RefreshTiming();
+            }
             m_rightScroll = EditorGUILayout.BeginScrollView(m_rightScroll);
             float previousLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 105;
@@ -90,12 +105,18 @@ namespace GenjitsuLAB.Animation.Editor
                 int newId = Mathf.Max(0, EditorGUILayout.DelayedIntField("Id", id.intValue));
                 if (EditorGUI.EndChangeCheck())
                 {
-                    if (AnimationPackAuthoring.HasId(m_pack, newId, m_clip)) m_idError = "Id already exists in this AnimationPack.";
+                    if (AnimationPackAuthoring.HasId(m_pack, newId, m_clip))
+                    {
+                        m_idError = "Id already exists in this AnimationPack.";
+                    }
                     else { id.intValue = newId; m_idError = null; }
                 }
                 if (AnimationPackAuthoring.HasId(m_pack, m_clip.AnimId, m_clip))
                     EditorGUILayout.HelpBox("Duplicate Id in existing data. Assign a unique Id.", MessageType.Error);
-                if (!string.IsNullOrEmpty(m_idError)) EditorGUILayout.HelpBox(m_idError, MessageType.Error);
+                if (!string.IsNullOrEmpty(m_idError))
+                {
+                    EditorGUILayout.HelpBox(m_idError, MessageType.Error);
+                }
                 SerializedProperty animationName = m_clipObject.FindProperty("m_animName");
                 EditorGUI.BeginChangeCheck();
                 string newName = EditorGUILayout.DelayedTextField("Name", animationName.stringValue);
@@ -128,7 +149,10 @@ namespace GenjitsuLAB.Animation.Editor
                     DrawBoxList(false);
                     DrawBoxList(true);
                 }
-                if (editable) ApplyClipChanges();
+                if (editable)
+                {
+                    ApplyClipChanges();
+                }
             }
             EditorGUIUtility.labelWidth = previousLabelWidth;
             EditorGUILayout.EndScrollView();
@@ -136,26 +160,41 @@ namespace GenjitsuLAB.Animation.Editor
 
         private void ApplyClipChanges()
         {
-            if (m_clipObject == null || !m_clipObject.ApplyModifiedProperties()) return;
+            if (m_clipObject == null || !m_clipObject.ApplyModifiedProperties())
+            {
+                return;
+            }
             m_clock.Pause();
             RefreshTiming();
             // Keep preview and inspector on the same element after changing its duration.
-            if (m_elementIndex >= 0) m_clock.Seek(m_clock.Start(m_elementIndex));
+            if (m_elementIndex >= 0)
+            {
+                m_clock.Seek(m_clock.Start(m_elementIndex));
+            }
             Repaint();
         }
 
         private SerializedProperty GetBoxes(bool hurt)
         {
-            if (m_clipObject == null || m_elementIndex < 0) return null;
+            if (m_clipObject == null || m_elementIndex < 0)
+            {
+                return null;
+            }
             SerializedProperty elements = m_clipObject.FindProperty("m_elements");
-            if (m_elementIndex >= elements.arraySize) return null;
+            if (m_elementIndex >= elements.arraySize)
+            {
+                return null;
+            }
             return elements.GetArrayElementAtIndex(m_elementIndex).FindPropertyRelative(hurt ? "m_hurtBoxes" : "m_hitBoxes");
         }
 
         private void DrawBoxList(bool hurt)
         {
             SerializedProperty boxes = GetBoxes(hurt);
-            if (boxes == null) return;
+            if (boxes == null)
+            {
+                return;
+            }
             using (new EditorGUILayout.HorizontalScope())
             {
                 Color old = GUI.contentColor;
@@ -207,11 +246,17 @@ namespace GenjitsuLAB.Animation.Editor
 
         private void DeleteSelectedBox()
         {
-            if (!CanEdit || m_boxIndex < 0) return;
+            if (!CanEdit || m_boxIndex < 0)
+            {
+                return;
+            }
             m_clock.Pause();
             m_clipObject.Update();
             SerializedProperty boxes = GetBoxes(m_boxIsHurt);
-            if (boxes == null || m_boxIndex >= boxes.arraySize) return;
+            if (boxes == null || m_boxIndex >= boxes.arraySize)
+            {
+                return;
+            }
             boxes.DeleteArrayElementAtIndex(m_boxIndex);
             m_boxIndex = Mathf.Min(m_boxIndex, boxes.arraySize - 1);
             m_clipObject.ApplyModifiedProperties();

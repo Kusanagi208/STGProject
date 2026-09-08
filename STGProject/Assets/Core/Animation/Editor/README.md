@@ -27,7 +27,7 @@
 - Select 可移動矩形及拖曳八個控制點縮放。Escape 取消目前拖曳，Preview 取得焦點後 Delete 刪除選取框。
 - 放開滑鼠才提交拖曳，一次拖曳一筆 Undo；右欄可新增、刪除或編輯 Box 數值。
 - Box 使用 Sprite pivot 為原點的本地 Unity 單位，右正上正；X/Y 為左下角，Width/Height 必須為正。
-- Sprite 的 pixelsPerUnit 決定圖片在本地座標中的大小；Box 可超出 Sprite 範圍。
+- Preview 使用與 SceneView 同樣的 Unity world unit 格線：格線錨定在 pivot 的 `(0, 0)`，會隨 Size 自適應顯示 1/2/5 格距；每五個小格為粗格。Sprite 的 `pixelsPerUnit` 決定圖片在格線中的世界大小，Box 可超出 Sprite 範圍。
 - 重疊時可從 Inspector 精確選取被遮住的 Box，再於 Preview 移動或縮放。
 
 ## 驗證

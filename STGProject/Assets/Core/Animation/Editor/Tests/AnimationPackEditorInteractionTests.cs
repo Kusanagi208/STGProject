@@ -39,9 +39,18 @@ namespace GenjitsuLAB.Animation.Editor.Tests
         [TearDown]
         public void TearDown()
         {
-            if (m_window != null) m_window.Close();
-            if (m_clip != null) Undo.ClearUndo(m_clip);
-            if (m_pack != null) Undo.ClearUndo(m_pack);
+            if (m_window != null)
+            {
+                m_window.Close();
+            }
+            if (m_clip != null)
+            {
+                Undo.ClearUndo(m_clip);
+            }
+            if (m_pack != null)
+            {
+                Undo.ClearUndo(m_pack);
+            }
             AssetDatabase.DeleteAsset(m_folder);
         }
 
@@ -49,7 +58,11 @@ namespace GenjitsuLAB.Animation.Editor.Tests
         [UnityTest]
         public IEnumerator CanvasCreatesMovesCancelsAndUndoesBoxes()
         {
-            for (int i = 0; i < 10; i++) { m_window.Repaint(); yield return null; }
+            for (int i = 0; i < 10; i++)
+            {
+                m_window.Repaint();
+                yield return null;
+            }
             Rect viewport = Get<Rect>("m_previewViewport");
             Assert.That(viewport.width, Is.GreaterThan(100), "The editor must render a usable canvas.");
             Vector2 origin = viewport.center + new Vector2(Get<float>("m_leftWidth") + 5, 0);
@@ -120,7 +133,10 @@ namespace GenjitsuLAB.Animation.Editor.Tests
         {
             var texture = new Texture2D(80, 40, TextureFormat.RGBA32, false);
             var pixels = new Color32[80 * 40];
-            for (int i = 0; i < pixels.Length; i++) pixels[i] = new Color32(255, 255, 255, 255);
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                pixels[i] = new Color32(255, 255, 255, 255);
+            }
             texture.SetPixels32(pixels);
             texture.Apply();
             string texturePath = m_folder + "/Texture.asset";
@@ -139,7 +155,11 @@ namespace GenjitsuLAB.Animation.Editor.Tests
                 }
                 AnimationPackAuthoring.Save(m_pack);
                 Set("m_size", 1.5f);
-                for (int i = 0; i < 10; i++) { m_window.Repaint(); yield return null; }
+                for (int i = 0; i < 10; i++)
+                {
+                    m_window.Repaint();
+                    yield return null;
+                }
                 var rendered = Get<Texture>("m_previewTexture") as RenderTexture;
                 Assert.That(rendered, Is.Not.Null);
                 Assert.That(Get<SpriteRenderer>("m_previewSprite").sprite, Is.EqualTo(sprite));
@@ -163,7 +183,10 @@ namespace GenjitsuLAB.Animation.Editor.Tests
                     for (int x = 0; x < rendered.width; x++)
                     {
                         Color32 pixel = actual[y * rendered.width + x];
-                        if (pixel.r < 240 || pixel.g < 240 || pixel.b < 240) continue;
+                        if (pixel.r < 240 || pixel.g < 240 || pixel.b < 240)
+                        {
+                            continue;
+                        }
                         minX = Mathf.Min(minX, x); minY = Mathf.Min(minY, y);
                         maxX = Mathf.Max(maxX, x); maxY = Mathf.Max(maxY, y);
                     }
@@ -183,7 +206,10 @@ namespace GenjitsuLAB.Animation.Editor.Tests
                     serialized.FindProperty("m_elements").GetArrayElementAtIndex(0).FindPropertyRelative("m_sprite").objectReferenceValue = null;
                     serialized.ApplyModifiedPropertiesWithoutUndo();
                 }
-                if (readback != null) UnityEngine.Object.DestroyImmediate(readback);
+                if (readback != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(readback);
+                }
                 AssetDatabase.DeleteAsset(texturePath);
             }
         }
@@ -192,7 +218,11 @@ namespace GenjitsuLAB.Animation.Editor.Tests
         [UnityTest]
         public IEnumerator PreviewResourcesAreReleasedOnClose()
         {
-            for (int i = 0; i < 10; i++) { m_window.Repaint(); yield return null; }
+            for (int i = 0; i < 10; i++)
+            {
+                m_window.Repaint();
+                yield return null;
+            }
             SpriteRenderer renderer = Get<SpriteRenderer>("m_previewSprite");
             Material material = Get<Material>("m_spriteMaterial");
             Assert.That(renderer != null, Is.True);
