@@ -1,5 +1,5 @@
-using UnityEngine;
 using GenjitsuLAB.Core;
+using UnityEngine;
 
 namespace GenjitsuLAB.STG
 {
@@ -12,8 +12,9 @@ namespace GenjitsuLAB.STG
 
         public override void Update()
         {
-            m_ctx.deltaTime = Time.deltaTime;
-            base.Update();
+            m_currentState?.Update(m_ctx);
         }
+
+
     }
 }
