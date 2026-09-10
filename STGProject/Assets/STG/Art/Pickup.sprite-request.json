@@ -1,0 +1,10 @@
+{
+  "states": {
+    "idle": {
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "action": "subtle four-phase axial rotation and center-light pulse; stable capsule silhouette; seamless loop"
+    }
+  }
+}

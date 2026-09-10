@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using GenjitsuLAB.Animation;
 
@@ -11,6 +12,7 @@ namespace GenjitsuLAB.STG
         [SerializeField] private AnimationPack m_animationPack;
         [SerializeField] private float m_speed;
         [SerializeField] private Vector2 m_bodySize = new Vector2(1f, 2f);
+        [SerializeField] private Rect m_pickupCollisionRect = new Rect(-0.25f, -0.35f, 0.5f, 0.7f);
         [SerializeField] private int m_idleAnimId;
         [SerializeField] private int m_leftBankingAnimId = 1;
         [SerializeField] private int m_rightBankingAnimId = 2;
@@ -32,6 +34,24 @@ namespace GenjitsuLAB.STG
         private Weapon[] m_activeWeapons;
         private int m_activeWeaponCount;
         private int m_fireCooldownTicks;
+
+        /// <summary>
+        /// Raised once when the player collects a pickup.
+        /// </summary>
+        public event Action<PickupType> PickupCollected;
+
+        internal Rect WorldPickupCollisionRect
+        {
+            get
+            {
+                Vector3 position = transform.position;
+                return new Rect(
+                    position.x + m_pickupCollisionRect.x,
+                    position.y + m_pickupCollisionRect.y,
+                    m_pickupCollisionRect.width,
+                    m_pickupCollisionRect.height);
+            }
+        }
 
         public void Initialize()
         {
@@ -64,6 +84,7 @@ namespace GenjitsuLAB.STG
 
         private void OnDestroy()
         {
+            PickupCollected = null;
             m_weaponPool?.Dispose();
             m_weaponPool = null;
             m_activeWeapons = null;
@@ -76,8 +97,15 @@ namespace GenjitsuLAB.STG
             m_leftBankingAnimId = Mathf.Max(0, m_leftBankingAnimId);
             m_rightBankingAnimId = Mathf.Max(0, m_rightBankingAnimId);
             m_bankingThreshold = Mathf.Clamp01(m_bankingThreshold);
+            m_pickupCollisionRect.width = Mathf.Max(0.01f, m_pickupCollisionRect.width);
+            m_pickupCollisionRect.height = Mathf.Max(0.01f, m_pickupCollisionRect.height);
             m_fireIntervalTicks = Mathf.Max(1, m_fireIntervalTicks);
             m_weaponPoolCapacity = Mathf.Max(1, m_weaponPoolCapacity);
+        }
+
+        internal void CollectPickup(PickupType pickupType)
+        {
+            PickupCollected?.Invoke(pickupType);
         }
 
         private void InitializeWeaponPool()

@@ -15,3 +15,6 @@ MonoBehaviour:
   m_backgroundPrefab: {fileID: 1044179984494534449, guid: a291d1441fb08f54c84e0b583d2665d2, type: 3}
   m_backgroundPosition: {x: 0, y: 0, z: 0}
   m_playerSpawnPosition: {x: 0, y: 1, z: 0}
+  m_pickupPrefab: {fileID: 400, guid: dfb9dc4a2a4f4c83a32c2f8132f1c375, type: 3}
+  m_testPickupSpawnPosition: {x: 0, y: 8, z: 0}
+  m_pickupPoolCapacity: 4

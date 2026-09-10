@@ -120,6 +120,18 @@ namespace GenjitsuLAB.STG
                 return false;
             }
 
+            if (m_gameSetting.InitialStage.PickupPrefab == null)
+            {
+                Debug.LogError("Initial StageSetting requires a pickup prefab.", m_gameSetting.InitialStage);
+                return false;
+            }
+
+            if (m_gameSetting.InitialStage.PickupPoolCapacity <= 0)
+            {
+                Debug.LogError("Initial StageSetting pickup pool capacity must be positive.", m_gameSetting.InitialStage);
+                return false;
+            }
+
             Rect movementArea = m_gameSetting.PlayerMovementArea;
             if (movementArea.width <= 0f || movementArea.height <= 0f)
             {
@@ -140,6 +152,22 @@ namespace GenjitsuLAB.STG
                 weaponRecycleArea.yMax < movementArea.yMax)
             {
                 Debug.LogError("GameSetting weapon recycle area must contain the player movement area.", m_gameSetting);
+                return false;
+            }
+
+            Rect pickupRecycleArea = m_gameSetting.PickupRecycleArea;
+            if (pickupRecycleArea.width <= 0f || pickupRecycleArea.height <= 0f)
+            {
+                Debug.LogError("GameSetting pickup recycle area must have a positive width and height.", m_gameSetting);
+                return false;
+            }
+
+            if (pickupRecycleArea.xMin > movementArea.xMin ||
+                pickupRecycleArea.xMax < movementArea.xMax ||
+                pickupRecycleArea.yMin > movementArea.yMin ||
+                pickupRecycleArea.yMax < movementArea.yMax)
+            {
+                Debug.LogError("GameSetting pickup recycle area must contain the player movement area.", m_gameSetting);
                 return false;
             }
 

@@ -11,6 +11,7 @@ namespace GenjitsuLAB.STG
         [SerializeField] private PlayerController m_playerPrefab;
         [SerializeField] private Rect m_playerMovementArea = new Rect(-5f, 0f, 10f, 9f);
         [SerializeField] private Rect m_weaponRecycleArea = new Rect(-6f, -1f, 12f, 11f);
+        [SerializeField] private Rect m_pickupRecycleArea = new Rect(-6f, -1f, 12f, 11f);
         [SerializeField] private StageSetting m_initialStage;
 
         /// <summary>
@@ -29,6 +30,11 @@ namespace GenjitsuLAB.STG
         public Rect WeaponRecycleArea => m_weaponRecycleArea;
 
         /// <summary>
+        /// Gets the fixed world-space area outside which pickups are recycled.
+        /// </summary>
+        public Rect PickupRecycleArea => m_pickupRecycleArea;
+
+        /// <summary>
         /// Gets the stage loaded when gameplay starts.
         /// </summary>
         public StageSetting InitialStage => m_initialStage;
@@ -45,6 +51,18 @@ namespace GenjitsuLAB.STG
             float recycleMaxX = Mathf.Max(m_weaponRecycleArea.xMax, m_playerMovementArea.xMax);
             float recycleMaxY = Mathf.Max(m_weaponRecycleArea.yMax, m_playerMovementArea.yMax);
             m_weaponRecycleArea = Rect.MinMaxRect(recycleMinX, recycleMinY, recycleMaxX, recycleMaxY);
+
+            m_pickupRecycleArea.width = Mathf.Max(0.01f, m_pickupRecycleArea.width);
+            m_pickupRecycleArea.height = Mathf.Max(0.01f, m_pickupRecycleArea.height);
+            float pickupRecycleMinX = Mathf.Min(m_pickupRecycleArea.xMin, m_playerMovementArea.xMin);
+            float pickupRecycleMinY = Mathf.Min(m_pickupRecycleArea.yMin, m_playerMovementArea.yMin);
+            float pickupRecycleMaxX = Mathf.Max(m_pickupRecycleArea.xMax, m_playerMovementArea.xMax);
+            float pickupRecycleMaxY = Mathf.Max(m_pickupRecycleArea.yMax, m_playerMovementArea.yMax);
+            m_pickupRecycleArea = Rect.MinMaxRect(
+                pickupRecycleMinX,
+                pickupRecycleMinY,
+                pickupRecycleMaxX,
+                pickupRecycleMaxY);
         }
     }
 }
