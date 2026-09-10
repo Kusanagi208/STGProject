@@ -21,6 +21,27 @@ MonoBehaviour:
     m_hitBoxes: []
     m_hurtBoxes: []
   m_totalTicks: 1
+--- !u!114 &-2393644525246115782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c1db7c9f3c28d24f9062e34948ae33a, type: 3}
+  m_Name: banking_R
+  m_EditorClassIdentifier: GenjitsuLAB.Core::GenjitsuLAB.Animation.AnimationClip
+  m_animId: 2
+  m_animName: banking_R
+  m_isLoop: 1
+  m_elements:
+  - m_sprite: {fileID: 21300000, guid: c55233ec4eb43f7449ffcad143f1b521, type: 3}
+    m_duration: 1
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  m_totalTicks: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35,3 +56,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: GenjitsuLAB.Core::GenjitsuLAB.Animation.AnimationPack
   m_clips:
   - {fileID: -8441394361652002483}
+  - {fileID: 4500308949157595073}
+  - {fileID: -2393644525246115782}
+--- !u!114 &4500308949157595073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c1db7c9f3c28d24f9062e34948ae33a, type: 3}
+  m_Name: banking_L
+  m_EditorClassIdentifier: GenjitsuLAB.Core::GenjitsuLAB.Animation.AnimationClip
+  m_animId: 1
+  m_animName: banking_L
+  m_isLoop: 1
+  m_elements:
+  - m_sprite: {fileID: 21300000, guid: 54ae4d18cfd6f6748a8375c36678c195, type: 3}
+    m_duration: 1
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  m_totalTicks: 1

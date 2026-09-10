@@ -12,5 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48ce311c6c423704691f07e90c7a3e2e, type: 3}
   m_Name: GameSettingAsset
   m_EditorClassIdentifier: Assembly-CSharp::GenjitsuLAB.STG.GameSetting
-  playerPrefab: {fileID: 3749061341688884394, guid: a4a7a2cc35360cb4c97986d3399a5e7a, type: 3}
-  background: {fileID: 1044179984494534449, guid: a291d1441fb08f54c84e0b583d2665d2, type: 3}
+  m_playerPrefab: {fileID: 3749061341688884394, guid: a4a7a2cc35360cb4c97986d3399a5e7a, type: 3}
+  m_playerMovementArea:
+    serializedVersion: 2
+    x: -5
+    y: 0
+    width: 10
+    height: 9
+  m_initialStage: {fileID: 11400000, guid: d9f08340621545df9e24fdcb045199b5, type: 2}

@@ -48,6 +48,11 @@ MonoBehaviour:
   m_spriteRenderer: {fileID: 3030022120063841617}
   m_animationPack: {fileID: 11400000, guid: fb495b75e646e614ea277d0179a81602, type: 2}
   m_speed: 0.1
+  m_bodySize: {x: 1, y: 1}
+  m_idleAnimId: 0
+  m_leftBankingAnimId: 1
+  m_rightBankingAnimId: 2
+  m_bankingThreshold: 0.5
 --- !u!1 &2660773614107539407
 GameObject:
   m_ObjectHideFlags: 0
