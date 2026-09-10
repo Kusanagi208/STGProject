@@ -19,4 +19,10 @@ MonoBehaviour:
     y: 0
     width: 10
     height: 9
+  m_weaponRecycleArea:
+    serializedVersion: 2
+    x: -6
+    y: -1
+    width: 12
+    height: 11
   m_initialStage: {fileID: 11400000, guid: d9f08340621545df9e24fdcb045199b5, type: 2}

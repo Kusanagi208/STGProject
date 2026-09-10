@@ -14,6 +14,15 @@
                                          "processors":  "",
                                          "interactions":  "",
                                          "initialStateCheck":  true
+                                     },
+                                     {
+                                         "name":  "Fire",
+                                         "type":  "Button",
+                                         "id":  "86b8f5a0-e271-4a77-9a62-7a013a0417b1",
+                                         "expectedControlType":  "Button",
+                                         "processors":  "",
+                                         "interactions":  "",
+                                         "initialStateCheck":  false
                                      }
                                  ],
                      "bindings":  [
@@ -126,6 +135,28 @@
                                           "action":  "Move",
                                           "isComposite":  false,
                                           "isPartOfComposite":  true
+                                      },
+                                      {
+                                          "name":  "",
+                                          "id":  "a2260f4c-acde-4cdf-a5fa-e960b4e25256",
+                                          "path":  "\u003cGamepad\u003e/buttonSouth",
+                                          "interactions":  "",
+                                          "processors":  "",
+                                          "groups":  "Gamepad",
+                                          "action":  "Fire",
+                                          "isComposite":  false,
+                                          "isPartOfComposite":  false
+                                      },
+                                      {
+                                          "name":  "",
+                                          "id":  "80f6613b-5a96-4da8-94a9-7d250a2a1d73",
+                                          "path":  "\u003cKeyboard\u003e/k",
+                                          "interactions":  "",
+                                          "processors":  "",
+                                          "groups":  "Keyboard\u0026Mouse",
+                                          "action":  "Fire",
+                                          "isComposite":  false,
+                                          "isPartOfComposite":  false
                                       }
                                   ]
                  },

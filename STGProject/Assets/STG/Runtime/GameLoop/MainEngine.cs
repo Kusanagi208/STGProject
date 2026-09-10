@@ -127,6 +127,22 @@ namespace GenjitsuLAB.STG
                 return false;
             }
 
+            Rect weaponRecycleArea = m_gameSetting.WeaponRecycleArea;
+            if (weaponRecycleArea.width <= 0f || weaponRecycleArea.height <= 0f)
+            {
+                Debug.LogError("GameSetting weapon recycle area must have a positive width and height.", m_gameSetting);
+                return false;
+            }
+
+            if (weaponRecycleArea.xMin > movementArea.xMin ||
+                weaponRecycleArea.xMax < movementArea.xMax ||
+                weaponRecycleArea.yMin > movementArea.yMin ||
+                weaponRecycleArea.yMax < movementArea.yMax)
+            {
+                Debug.LogError("GameSetting weapon recycle area must contain the player movement area.", m_gameSetting);
+                return false;
+            }
+
             return true;
         }
     }

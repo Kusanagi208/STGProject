@@ -10,6 +10,7 @@ namespace GenjitsuLAB.STG
         [FormerlySerializedAs("playerPrefab")]
         [SerializeField] private PlayerController m_playerPrefab;
         [SerializeField] private Rect m_playerMovementArea = new Rect(-5f, 0f, 10f, 9f);
+        [SerializeField] private Rect m_weaponRecycleArea = new Rect(-6f, -1f, 12f, 11f);
         [SerializeField] private StageSetting m_initialStage;
 
         /// <summary>
@@ -23,6 +24,11 @@ namespace GenjitsuLAB.STG
         public Rect PlayerMovementArea => m_playerMovementArea;
 
         /// <summary>
+        /// Gets the fixed world-space area outside which player weapons are recycled.
+        /// </summary>
+        public Rect WeaponRecycleArea => m_weaponRecycleArea;
+
+        /// <summary>
         /// Gets the stage loaded when gameplay starts.
         /// </summary>
         public StageSetting InitialStage => m_initialStage;
@@ -31,6 +37,14 @@ namespace GenjitsuLAB.STG
         {
             m_playerMovementArea.width = Mathf.Max(0.01f, m_playerMovementArea.width);
             m_playerMovementArea.height = Mathf.Max(0.01f, m_playerMovementArea.height);
+
+            m_weaponRecycleArea.width = Mathf.Max(0.01f, m_weaponRecycleArea.width);
+            m_weaponRecycleArea.height = Mathf.Max(0.01f, m_weaponRecycleArea.height);
+            float recycleMinX = Mathf.Min(m_weaponRecycleArea.xMin, m_playerMovementArea.xMin);
+            float recycleMinY = Mathf.Min(m_weaponRecycleArea.yMin, m_playerMovementArea.yMin);
+            float recycleMaxX = Mathf.Max(m_weaponRecycleArea.xMax, m_playerMovementArea.xMax);
+            float recycleMaxY = Mathf.Max(m_weaponRecycleArea.yMax, m_playerMovementArea.yMax);
+            m_weaponRecycleArea = Rect.MinMaxRect(recycleMinX, recycleMinY, recycleMaxX, recycleMaxY);
         }
     }
 }
