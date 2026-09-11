@@ -13,6 +13,7 @@ namespace GenjitsuLAB.STG
         [SerializeField] private float m_speed;
         [SerializeField] private Vector2 m_bodySize = new Vector2(1f, 2f);
         [SerializeField] private Rect m_pickupCollisionRect = new Rect(-0.25f, -0.35f, 0.5f, 0.7f);
+        [SerializeField] private Rect m_damageRect = new Rect(-0.2f, -0.25f, 0.4f, 0.5f);
         [SerializeField] private int m_idleAnimId;
         [SerializeField] private int m_leftBankingAnimId = 1;
         [SerializeField] private int m_rightBankingAnimId = 2;
@@ -40,6 +41,18 @@ namespace GenjitsuLAB.STG
         /// </summary>
         public event Action<PickupType> PickupCollected;
 
+        /// <summary>
+        /// Raised once when the player's damage rectangle is hit.
+        /// </summary>
+        public event Action Destroyed;
+
+        /// <summary>
+        /// Gets whether this player has been destroyed for the current stage run.
+        /// </summary>
+        public bool IsDestroyed { get; private set; }
+
+        internal Rect WorldDamageRect => ToWorldRect(m_damageRect);
+
         internal Rect WorldPickupCollisionRect
         {
             get
@@ -55,6 +68,8 @@ namespace GenjitsuLAB.STG
 
         public void Initialize()
         {
+            IsDestroyed = false;
+            m_spriteRenderer.enabled = true;
             m_animPlayer = new AnimationPlayer(m_spriteRenderer, m_animationPack.Clips);
             m_resolvedIdleAnimId = ResolveAnimationId(m_idleAnimId, "Idle", k_invalidAnimId);
             m_resolvedLeftBankingAnimId = ResolveAnimationId(
@@ -73,6 +88,11 @@ namespace GenjitsuLAB.STG
 
         public void Tick(GameSceneContext ctx)
         {
+            if (IsDestroyed)
+            {
+                return;
+            }
+
             Vector2 direction = Vector2.ClampMagnitude(ctx.inputActions.Player.Move.ReadValue<Vector2>(), 1f);
             Move(direction, ctx.gameSetting.PlayerMovementArea);
             UpdateMovementAnimation(direction.x);
@@ -85,6 +105,7 @@ namespace GenjitsuLAB.STG
         private void OnDestroy()
         {
             PickupCollected = null;
+            Destroyed = null;
             m_weaponPool?.Dispose();
             m_weaponPool = null;
             m_activeWeapons = null;
@@ -99,6 +120,8 @@ namespace GenjitsuLAB.STG
             m_bankingThreshold = Mathf.Clamp01(m_bankingThreshold);
             m_pickupCollisionRect.width = Mathf.Max(0.01f, m_pickupCollisionRect.width);
             m_pickupCollisionRect.height = Mathf.Max(0.01f, m_pickupCollisionRect.height);
+            m_damageRect.width = Mathf.Max(0.01f, m_damageRect.width);
+            m_damageRect.height = Mathf.Max(0.01f, m_damageRect.height);
             m_fireIntervalTicks = Mathf.Max(1, m_fireIntervalTicks);
             m_weaponPoolCapacity = Mathf.Max(1, m_weaponPoolCapacity);
         }
@@ -106,6 +129,35 @@ namespace GenjitsuLAB.STG
         internal void CollectPickup(PickupType pickupType)
         {
             PickupCollected?.Invoke(pickupType);
+        }
+
+        internal void DestroyByDamage()
+        {
+            if (IsDestroyed)
+            {
+                return;
+            }
+
+            IsDestroyed = true;
+            m_weaponPool?.ReturnAll();
+            if (m_activeWeapons != null)
+            {
+                Array.Clear(m_activeWeapons, 0, m_activeWeaponCount);
+            }
+
+            m_activeWeaponCount = 0;
+            m_spriteRenderer.enabled = false;
+            Destroyed?.Invoke();
+        }
+
+        private Rect ToWorldRect(Rect localRect)
+        {
+            Vector3 position = transform.position;
+            return new Rect(
+                position.x + localRect.x,
+                position.y + localRect.y,
+                localRect.width,
+                localRect.height);
         }
 
         private void InitializeWeaponPool()

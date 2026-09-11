@@ -3,13 +3,12 @@ using UnityEngine;
 namespace GenjitsuLAB.STG
 {
     /// <summary>
-    /// Defines the visual content and spawn positions for one gameplay stage.
+    /// Defines scene content and spawn settings for one gameplay stage.
     /// </summary>
     [CreateAssetMenu(fileName = "StageSettingAsset", menuName = "STG/Stage Setting Asset")]
     public sealed class StageSetting : ScriptableObject
     {
-        [SerializeField] private Transform m_backgroundPrefab;
-        [SerializeField] private Vector3 m_backgroundPosition;
+        [SerializeField] private string m_sceneName = "Stage01";
         [SerializeField] private Vector3 m_playerSpawnPosition = Vector3.up;
         [SerializeField] private Pickup m_pickupPrefab;
         [SerializeField] private Vector3 m_testPickupSpawnPosition = new Vector3(0f, 8f, 0f);
@@ -17,14 +16,9 @@ namespace GenjitsuLAB.STG
         [SerializeField] private int m_pickupPoolCapacity = 4;
 
         /// <summary>
-        /// Gets the background prefab instantiated for this stage.
+        /// Gets the additive Unity scene name containing this stage.
         /// </summary>
-        public Transform BackgroundPrefab => m_backgroundPrefab;
-
-        /// <summary>
-        /// Gets the world-space background spawn position.
-        /// </summary>
-        public Vector3 BackgroundPosition => m_backgroundPosition;
+        public string SceneName => m_sceneName;
 
         /// <summary>
         /// Gets the world-space player spawn position.

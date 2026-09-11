@@ -138,10 +138,19 @@ namespace GenjitsuLAB.STG.Tests
         {
             EditorSceneManager.OpenScene("Assets/STG/Scene/Main.unity");
             yield return new EnterPlayMode();
-            yield return null;
 
             Type pickupType = RequireRuntimeType("GenjitsuLAB.STG.Pickup");
             Type playerType = RequireRuntimeType("GenjitsuLAB.STG.PlayerController");
+            for (int frameIndex = 0; frameIndex < 300; frameIndex++)
+            {
+                if (FindActiveSceneComponent(pickupType) != null && FindActiveSceneComponent(playerType) != null)
+                {
+                    break;
+                }
+
+                yield return null;
+            }
+
             Component pickup = FindSingleActiveSceneComponent(pickupType);
             Component player = FindSingleActiveSceneComponent(playerType);
             Assert.That(pickup.transform.position.x, Is.EqualTo(0f).Within(0.0001f));
@@ -227,6 +236,21 @@ namespace GenjitsuLAB.STG.Tests
 
             Assert.That(count, Is.EqualTo(1), $"Expected one active {componentType.Name} in the loaded scene.");
             return result;
+        }
+
+        private static Component FindActiveSceneComponent(Type componentType)
+        {
+            UnityEngine.Object[] candidates = Resources.FindObjectsOfTypeAll(componentType);
+            for (int index = 0; index < candidates.Length; index++)
+            {
+                Component candidate = candidates[index] as Component;
+                if (candidate != null && candidate.gameObject.scene.IsValid() && candidate.gameObject.activeInHierarchy)
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
         }
 
         private static Type RequireRuntimeType(string fullName)

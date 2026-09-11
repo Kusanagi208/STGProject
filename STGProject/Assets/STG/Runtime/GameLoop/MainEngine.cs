@@ -9,6 +9,8 @@ namespace GenjitsuLAB.STG
         private const float k_tickDelta = 1f / k_tickRate;
         private const int k_maxTicksPerUpdate = 8;
 
+        private static MainEngine s_instance;
+
         [SerializeField] private GameSetting m_gameSetting;
 
         private int m_frameCount;
@@ -20,6 +22,15 @@ namespace GenjitsuLAB.STG
 
         private void Awake()
         {
+            if (s_instance != null && s_instance != this)
+            {
+                Destroy(transform.root.gameObject);
+                return;
+            }
+
+            s_instance = this;
+            DontDestroyOnLoad(transform.root.gameObject);
+
             if (!ValidateSettings())
             {
                 enabled = false;
@@ -51,6 +62,11 @@ namespace GenjitsuLAB.STG
 
         private void OnDestroy()
         {
+            if (s_instance != this)
+            {
+                return;
+            }
+
             m_gameSceneFSM?.Stop();
             m_gameSceneFSM = null;
             m_gameSceneContext = null;
@@ -61,6 +77,8 @@ namespace GenjitsuLAB.STG
                 m_inputActions.Dispose();
                 m_inputActions = null;
             }
+
+            s_instance = null;
         }
 
         private void FrameLoop(float frameDeltaTime)
@@ -114,9 +132,9 @@ namespace GenjitsuLAB.STG
                 return false;
             }
 
-            if (m_gameSetting.InitialStage.BackgroundPrefab == null)
+            if (string.IsNullOrWhiteSpace(m_gameSetting.InitialStage.SceneName))
             {
-                Debug.LogError("Initial StageSetting requires a background prefab.", m_gameSetting.InitialStage);
+                Debug.LogError("Initial StageSetting requires an additive scene name.", m_gameSetting.InitialStage);
                 return false;
             }
 
@@ -172,6 +190,12 @@ namespace GenjitsuLAB.STG
             }
 
             return true;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            s_instance = null;
         }
     }
 }
