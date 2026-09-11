@@ -150,6 +150,22 @@ namespace GenjitsuLAB.STG
                 return false;
             }
 
+            if (m_gameSetting.InitialStage.StraightEnemyPrefab == null ||
+                m_gameSetting.InitialStage.ShooterEnemyPrefab == null ||
+                m_gameSetting.InitialStage.BulletPrefab == null)
+            {
+                Debug.LogError("Initial StageSetting requires Straight, Shooter, and Bullet prefabs.", m_gameSetting.InitialStage);
+                return false;
+            }
+
+            if (m_gameSetting.InitialStage.StraightEnemyPoolCapacity <= 0 ||
+                m_gameSetting.InitialStage.ShooterEnemyPoolCapacity <= 0 ||
+                m_gameSetting.InitialStage.BulletPoolCapacity <= 0)
+            {
+                Debug.LogError("Initial StageSetting enemy and bullet pool capacities must be positive.", m_gameSetting.InitialStage);
+                return false;
+            }
+
             Rect movementArea = m_gameSetting.PlayerMovementArea;
             if (movementArea.width <= 0f || movementArea.height <= 0f)
             {
@@ -186,6 +202,36 @@ namespace GenjitsuLAB.STG
                 pickupRecycleArea.yMax < movementArea.yMax)
             {
                 Debug.LogError("GameSetting pickup recycle area must contain the player movement area.", m_gameSetting);
+                return false;
+            }
+
+            if (!ValidateContainingArea(m_gameSetting.EnemyRecycleArea, movementArea, "enemy recycle"))
+            {
+                return false;
+            }
+
+            if (!ValidateContainingArea(m_gameSetting.BulletRecycleArea, movementArea, "bullet recycle"))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool ValidateContainingArea(Rect area, Rect movementArea, string areaName)
+        {
+            if (area.width <= 0f || area.height <= 0f)
+            {
+                Debug.LogError($"GameSetting {areaName} area must have a positive width and height.", m_gameSetting);
+                return false;
+            }
+
+            if (area.xMin > movementArea.xMin ||
+                area.xMax < movementArea.xMax ||
+                area.yMin > movementArea.yMin ||
+                area.yMax < movementArea.yMax)
+            {
+                Debug.LogError($"GameSetting {areaName} area must contain the player movement area.", m_gameSetting);
                 return false;
             }
 

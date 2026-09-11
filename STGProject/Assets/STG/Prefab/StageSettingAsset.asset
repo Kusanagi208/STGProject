@@ -17,3 +17,9 @@ MonoBehaviour:
   m_pickupPrefab: {fileID: 400, guid: dfb9dc4a2a4f4c83a32c2f8132f1c375, type: 3}
   m_testPickupSpawnPosition: {x: 0, y: 8, z: 0}
   m_pickupPoolCapacity: 4
+  m_straightEnemyPrefab: {fileID: 2668611778523102450, guid: 9351a6655e417d24986acb85ab08a202, type: 3}
+  m_shooterEnemyPrefab: {fileID: 2668611778523102450, guid: be3292af92b53f74789d7af60b2cf221, type: 3}
+  m_bulletPrefab: {fileID: -4239499434121635170, guid: 59d98c99968599648894fa664d2d0c8e, type: 3}
+  m_straightEnemyPoolCapacity: 8
+  m_shooterEnemyPoolCapacity: 4
+  m_bulletPoolCapacity: 32

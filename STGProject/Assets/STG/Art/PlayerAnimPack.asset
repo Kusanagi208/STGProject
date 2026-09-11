@@ -16,7 +16,7 @@ MonoBehaviour:
   m_animName: idle
   m_isLoop: 1
   m_elements:
-  - m_sprite: {fileID: 21300000, guid: 54d56aa8016ea8d428db64751ee449db, type: 3}
+  - m_sprite: {fileID: 21300000, guid: 2252a1d512e350d42a4292e57c099d51, type: 3}
     m_duration: 1
     m_hitBoxes: []
     m_hurtBoxes: []
@@ -37,7 +37,7 @@ MonoBehaviour:
   m_animName: banking_R
   m_isLoop: 1
   m_elements:
-  - m_sprite: {fileID: 21300000, guid: c55233ec4eb43f7449ffcad143f1b521, type: 3}
+  - m_sprite: {fileID: 21300000, guid: b3f4236dc041a204baaeea124948768a, type: 3}
     m_duration: 1
     m_hitBoxes: []
     m_hurtBoxes: []
@@ -74,7 +74,7 @@ MonoBehaviour:
   m_animName: banking_L
   m_isLoop: 1
   m_elements:
-  - m_sprite: {fileID: 21300000, guid: 54ae4d18cfd6f6748a8375c36678c195, type: 3}
+  - m_sprite: {fileID: 21300000, guid: 747e79475b7a6b7429670197fa2f8229, type: 3}
     m_duration: 1
     m_hitBoxes: []
     m_hurtBoxes: []

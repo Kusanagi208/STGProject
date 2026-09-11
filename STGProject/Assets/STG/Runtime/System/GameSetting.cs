@@ -12,6 +12,8 @@ namespace GenjitsuLAB.STG
         [SerializeField] private Rect m_playerMovementArea = new Rect(-5f, 0f, 10f, 9f);
         [SerializeField] private Rect m_weaponRecycleArea = new Rect(-6f, -1f, 12f, 11f);
         [SerializeField] private Rect m_pickupRecycleArea = new Rect(-6f, -1f, 12f, 11f);
+        [SerializeField] private Rect m_enemyRecycleArea = new Rect(-6f, -1f, 12f, 11f);
+        [SerializeField] private Rect m_bulletRecycleArea = new Rect(-6f, -1f, 12f, 11f);
         [SerializeField] private StageSetting m_initialStage;
 
         /// <summary>
@@ -33,6 +35,16 @@ namespace GenjitsuLAB.STG
         /// Gets the fixed world-space area outside which pickups are recycled.
         /// </summary>
         public Rect PickupRecycleArea => m_pickupRecycleArea;
+
+        /// <summary>
+        /// Gets the fixed world-space area outside which enemies are recycled.
+        /// </summary>
+        public Rect EnemyRecycleArea => m_enemyRecycleArea;
+
+        /// <summary>
+        /// Gets the fixed world-space area outside which enemy bullets are recycled.
+        /// </summary>
+        public Rect BulletRecycleArea => m_bulletRecycleArea;
 
         /// <summary>
         /// Gets the stage loaded when gameplay starts.
@@ -63,6 +75,20 @@ namespace GenjitsuLAB.STG
                 pickupRecycleMinY,
                 pickupRecycleMaxX,
                 pickupRecycleMaxY);
+
+            m_enemyRecycleArea = EnsureContainsMovementArea(m_enemyRecycleArea);
+            m_bulletRecycleArea = EnsureContainsMovementArea(m_bulletRecycleArea);
+        }
+
+        private Rect EnsureContainsMovementArea(Rect area)
+        {
+            area.width = Mathf.Max(0.01f, area.width);
+            area.height = Mathf.Max(0.01f, area.height);
+            return Rect.MinMaxRect(
+                Mathf.Min(area.xMin, m_playerMovementArea.xMin),
+                Mathf.Min(area.yMin, m_playerMovementArea.yMin),
+                Mathf.Max(area.xMax, m_playerMovementArea.xMax),
+                Mathf.Max(area.yMax, m_playerMovementArea.yMax));
         }
     }
 }

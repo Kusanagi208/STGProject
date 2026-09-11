@@ -16,6 +16,7 @@ namespace GenjitsuLAB.STG
         private Transform m_stageRoot;
         private StageController m_stageController;
         private PlayerController m_playerController;
+        private EnemyRuntime m_enemyRuntime;
         private ComponentPool<Pickup> m_pickupPool;
         private Pickup[] m_activePickups;
         private int m_activePickupCount;
@@ -51,6 +52,13 @@ namespace GenjitsuLAB.STG
         {
             ctx.inputActions.Player.Disable();
             m_isExiting = true;
+            if (m_stageController != null)
+            {
+                m_stageController.SpawnerTriggered -= OnSpawnerTriggered;
+            }
+
+            m_enemyRuntime?.Dispose();
+            m_enemyRuntime = null;
             m_pickupPool?.Dispose();
             m_pickupPool = null;
             m_activePickups = null;
@@ -90,6 +98,14 @@ namespace GenjitsuLAB.STG
             m_stageController.TickScroll();
             m_playerController.Tick(ctx);
             TickObstacleCollision(ctx);
+            if (m_enemyRuntime.Tick(
+                    m_playerController,
+                    ctx.gameSetting.EnemyRecycleArea,
+                    ctx.gameSetting.BulletRecycleArea))
+            {
+                ctx.inputActions.Player.Disable();
+            }
+
             m_stageController.TickSpawners();
             TickPickups(ctx.gameSetting.PickupRecycleArea);
         }
@@ -124,6 +140,8 @@ namespace GenjitsuLAB.STG
                 Quaternion.identity,
                 m_stageRoot);
             m_playerController.Initialize();
+            m_enemyRuntime = new EnemyRuntime(m_stageSetting, m_stageRoot);
+            m_stageController.SpawnerTriggered += OnSpawnerTriggered;
             InitializePickupPool();
             TrySpawnTestPickup();
             ctx.inputActions.Player.Enable();
@@ -214,6 +232,11 @@ namespace GenjitsuLAB.STG
             int lastIndex = --m_activePickupCount;
             m_activePickups[index] = m_activePickups[lastIndex];
             m_activePickups[lastIndex] = null;
+        }
+
+        private void OnSpawnerTriggered(StageEnemySpawner spawner)
+        {
+            m_enemyRuntime.TrySpawn(spawner);
         }
 
         private void UnloadPendingStage(AsyncOperation operation)

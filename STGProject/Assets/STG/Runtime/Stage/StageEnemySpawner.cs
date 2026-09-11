@@ -8,11 +8,15 @@ namespace GenjitsuLAB.STG
     public sealed class StageEnemySpawner : MonoBehaviour
     {
         [SerializeField] private float m_activationY = 9f;
+        [SerializeField] private EnemyType m_enemyType;
 
         private bool m_isTriggered;
 
         /// <summary>Gets whether this marker has crossed its activation line.</summary>
         public bool IsTriggered => m_isTriggered;
+
+        /// <summary>Gets the enemy behavior spawned by this marker.</summary>
+        public EnemyType EnemyType => m_enemyType;
 
         internal void Initialize()
         {

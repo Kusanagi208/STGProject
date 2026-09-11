@@ -3,12 +3,15 @@ using UnityEngine;
 namespace GenjitsuLAB.STG
 {
     /// <summary>
-    /// Represents a pooled player projectile advanced by the gameplay fixed tick.
+    /// Represents one pooled enemy projectile with a fixed launch direction.
     /// </summary>
-    public sealed class Weapon : MonoBehaviour
+    public sealed class Bullet : MonoBehaviour
     {
-        [SerializeField] private Rect m_damageRect = new Rect(-0.1f, -0.25f, 0.2f, 0.5f);
-        [SerializeField] private float m_speedPerTick = 0.25f;
+        [SerializeField] private Rect m_damageRect = new Rect(-0.1f, -0.1f, 0.2f, 0.2f);
+        [Min(0f)]
+        [SerializeField] private float m_speedPerTick = 0.08f;
+
+        private Vector2 m_direction;
 
         internal Rect WorldDamageRect
         {
@@ -23,17 +26,26 @@ namespace GenjitsuLAB.STG
             }
         }
 
-        internal void Spawn(Vector3 position)
+        internal Vector2 Direction => m_direction;
+
+        internal void Spawn(Vector3 position, Vector2 direction)
         {
             transform.position = position;
+            if (direction.sqrMagnitude <= Mathf.Epsilon)
+            {
+                m_direction = Vector2.down;
+                return;
+            }
+
+            m_direction = direction.normalized;
         }
 
         internal bool Tick(Rect recycleArea)
         {
             Vector3 position = transform.position;
-            position.y += m_speedPerTick;
+            position.x += m_direction.x * m_speedPerTick;
+            position.y += m_direction.y * m_speedPerTick;
             transform.position = position;
-
             return position.x >= recycleArea.xMin &&
                    position.x <= recycleArea.xMax &&
                    position.y >= recycleArea.yMin &&

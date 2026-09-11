@@ -131,6 +131,23 @@ namespace GenjitsuLAB.STG
             PickupCollected?.Invoke(pickupType);
         }
 
+        internal bool TryConsumeWeaponHit(Rect targetRect)
+        {
+            for (int index = 0; index < m_activeWeaponCount; index++)
+            {
+                Weapon weapon = m_activeWeapons[index];
+                if (!weapon.WorldDamageRect.Overlaps(targetRect))
+                {
+                    continue;
+                }
+
+                ReturnWeaponAt(index);
+                return true;
+            }
+
+            return false;
+        }
+
         internal void DestroyByDamage()
         {
             if (IsDestroyed)
@@ -215,11 +232,17 @@ namespace GenjitsuLAB.STG
                     continue;
                 }
 
-                m_weaponPool.Return(weapon);
-                int lastIndex = --m_activeWeaponCount;
-                m_activeWeapons[index] = m_activeWeapons[lastIndex];
-                m_activeWeapons[lastIndex] = null;
+                ReturnWeaponAt(index);
             }
+        }
+
+        private void ReturnWeaponAt(int index)
+        {
+            Weapon weapon = m_activeWeapons[index];
+            m_weaponPool.Return(weapon);
+            int lastIndex = --m_activeWeaponCount;
+            m_activeWeapons[index] = m_activeWeapons[lastIndex];
+            m_activeWeapons[lastIndex] = null;
         }
 
         private int ResolveAnimationId(int animId, string animationName, int fallbackAnimId)
