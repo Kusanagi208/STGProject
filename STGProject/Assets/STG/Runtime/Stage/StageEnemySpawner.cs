@@ -18,6 +18,11 @@ namespace GenjitsuLAB.STG
         /// <summary>Gets the enemy behavior spawned by this marker.</summary>
         public EnemyType EnemyType => m_enemyType;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>Gets this spawner's authored world-space activation height.</summary>
+        internal float ActivationY => m_activationY;
+#endif
+
         internal void Initialize()
         {
             m_isTriggered = false;

@@ -1,3 +1,4 @@
+using GenjitsuLAB.Animation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -16,9 +17,11 @@ namespace GenjitsuLAB.STG.EditorTools
         private const string k_playerLeftTexturePath = "Assets/STG/Art/PlayerBankingLeft.png";
         private const string k_playerRightTexturePath = "Assets/STG/Art/PlayerBankingRight.png";
         private const string k_playerAnimationPackPath = "Assets/STG/Art/PlayerAnimPack.asset";
-        private const string k_straightPrefabPath = "Assets/STG/Prefab/EnemyStraight.prefab";
-        private const string k_shooterPrefabPath = "Assets/STG/Prefab/EnemyShooter.prefab";
-        private const string k_bulletPrefabPath = "Assets/STG/Prefab/EnemyBullet.prefab";
+        private const string k_straightAnimationPackPath = "Assets/STG/Art/EnemyStraightAnimPack.asset";
+        private const string k_shooterAnimationPackPath = "Assets/STG/Art/EnemyShooterAnimPack.asset";
+        private const string k_straightPrefabPath = "Assets/STG/Prefab/Enemy1.prefab";
+        private const string k_shooterPrefabPath = "Assets/STG/Prefab/Enemy2.prefab";
+        private const string k_bulletPrefabPath = "Assets/STG/Prefab/Bullet.prefab";
         private const string k_stageSettingPath = "Assets/STG/Prefab/StageSettingAsset.asset";
         private const string k_gameSettingPath = "Assets/STG/Prefab/GameSettingAsset.asset";
         private const string k_stageScenePath = "Assets/STG/Scene/Stage01.unity";
@@ -34,19 +37,27 @@ namespace GenjitsuLAB.STG.EditorTools
             ConfigureTexture(k_playerLeftTexturePath);
             ConfigureTexture(k_playerRightTexturePath);
             ConfigurePlayerAnimationPack();
+            AnimationPack straightAnimationPack = ConfigureEnemyAnimationPack(
+                k_straightAnimationPackPath,
+                k_straightTexturePath);
+            AnimationPack shooterAnimationPack = ConfigureEnemyAnimationPack(
+                k_shooterAnimationPackPath,
+                k_shooterTexturePath);
 
             EnemyController straight = CreateEnemyPrefab(
                 k_straightPrefabPath,
-                "EnemyStraight",
+                "Enemy1",
                 k_straightTexturePath,
+                straightAnimationPack,
                 EnemyType.Straight,
                 new Rect(-0.35f, -0.35f, 0.7f, 0.7f),
                 0.04f,
                 false);
             EnemyController shooter = CreateEnemyPrefab(
                 k_shooterPrefabPath,
-                "EnemyShooter",
+                "Enemy2",
                 k_shooterTexturePath,
+                shooterAnimationPack,
                 EnemyType.Shooter,
                 new Rect(-0.45f, -0.35f, 0.9f, 0.7f),
                 0.03f,
@@ -84,6 +95,7 @@ namespace GenjitsuLAB.STG.EditorTools
             string prefabPath,
             string objectName,
             string texturePath,
+            AnimationPack animationPack,
             EnemyType enemyType,
             Rect damageRect,
             float speedPerTick,
@@ -108,6 +120,8 @@ namespace GenjitsuLAB.STG.EditorTools
                 EnemyController controller = root.AddComponent<EnemyController>();
                 SerializedObject serialized = new SerializedObject(controller);
                 serialized.FindProperty("m_spriteRenderer").objectReferenceValue = renderer;
+                serialized.FindProperty("m_animationPack").objectReferenceValue = animationPack;
+                serialized.FindProperty("m_animationId").intValue = 0;
                 serialized.FindProperty("m_enemyType").enumValueIndex = (int)enemyType;
                 serialized.FindProperty("m_damageRect").rectValue = damageRect;
                 serialized.FindProperty("m_speedPerTick").floatValue = speedPerTick;
@@ -159,9 +173,45 @@ namespace GenjitsuLAB.STG.EditorTools
             }
         }
 
+        private static AnimationPack ConfigureEnemyAnimationPack(string animationPackPath, string texturePath)
+        {
+            AnimationPack animationPack = AssetDatabase.LoadAssetAtPath<AnimationPack>(animationPackPath);
+            if (animationPack == null)
+            {
+                throw new MissingReferenceException($"Enemy AnimationPack not found: {animationPackPath}");
+            }
+
+            Object[] assets = AssetDatabase.LoadAllAssetsAtPath(animationPackPath);
+            for (int index = 0; index < assets.Length; index++)
+            {
+                GenjitsuLAB.Animation.AnimationClip clip =
+                    assets[index] as GenjitsuLAB.Animation.AnimationClip;
+                if (clip == null || clip.AnimId != 0)
+                {
+                    continue;
+                }
+
+                SerializedObject serialized = new SerializedObject(clip);
+                SerializedProperty elements = serialized.FindProperty("m_elements");
+                if (elements.arraySize == 0)
+                {
+                    elements.InsertArrayElementAtIndex(0);
+                }
+
+                elements.GetArrayElementAtIndex(0)
+                    .FindPropertyRelative("m_sprite")
+                    .objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(texturePath);
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(clip);
+                return animationPack;
+            }
+
+            throw new MissingReferenceException($"Enemy AnimationPack requires animation ID 0: {animationPackPath}");
+        }
+
         private static Bullet CreateBulletPrefab()
         {
-            GameObject root = new GameObject("EnemyBullet");
+            GameObject root = new GameObject("Bullet");
             try
             {
                 SpriteRenderer renderer = root.AddComponent<SpriteRenderer>();

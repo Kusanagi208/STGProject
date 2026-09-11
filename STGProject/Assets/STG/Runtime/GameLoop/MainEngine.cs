@@ -1,4 +1,7 @@
 using UnityEngine;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using UnityEngine.InputSystem;
+#endif
 
 
 namespace GenjitsuLAB.STG
@@ -12,6 +15,10 @@ namespace GenjitsuLAB.STG
         private static MainEngine s_instance;
 
         [SerializeField] private GameSetting m_gameSetting;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        [SerializeField] private Camera m_debugCamera;
+        [SerializeField] private Canvas m_debugCanvas;
+#endif
 
         private int m_frameCount;
         private double m_accumulator;
@@ -19,6 +26,9 @@ namespace GenjitsuLAB.STG
         private GameSceneFSM m_gameSceneFSM;
         private GameSceneContext m_gameSceneContext;
         private InputActions m_inputActions;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private DebugHudController m_debugHud;
+#endif
 
         private void Awake()
         {
@@ -39,6 +49,10 @@ namespace GenjitsuLAB.STG
 
             m_inputActions = new InputActions();
             m_gameSceneContext = new GameSceneContext(m_gameSetting, m_inputActions);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            m_debugHud = DebugHudController.TryCreate(m_debugCamera, m_debugCanvas, m_gameSetting, this);
+            m_gameSceneContext.debugHud = m_debugHud;
+#endif
             m_gameSceneContext.deltaTime = k_tickDelta;
             m_gameSceneFSM = new GameSceneFSM(m_gameSceneContext);
         }
@@ -57,7 +71,17 @@ namespace GenjitsuLAB.STG
 
         private void Update()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Keyboard keyboard = Keyboard.current;
+            if (m_debugHud != null && keyboard != null && keyboard.f1Key.wasPressedThisFrame)
+            {
+                m_debugHud.Toggle();
+            }
+#endif
             FrameLoop(Time.deltaTime);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            m_debugHud?.Refresh();
+#endif
         }
 
         private void OnDestroy()
@@ -70,6 +94,11 @@ namespace GenjitsuLAB.STG
             m_gameSceneFSM?.Stop();
             m_gameSceneFSM = null;
             m_gameSceneContext = null;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            m_debugHud?.Dispose();
+            m_debugHud = null;
+#endif
 
             if (m_inputActions != null)
             {

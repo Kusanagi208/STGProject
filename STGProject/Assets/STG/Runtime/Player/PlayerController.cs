@@ -53,6 +53,14 @@ namespace GenjitsuLAB.STG
 
         internal Rect WorldDamageRect => ToWorldRect(m_damageRect);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>Gets the number of active pooled player weapons for runtime diagnostics.</summary>
+        internal int ActiveWeaponCount => m_activeWeaponCount;
+
+        /// <summary>Gets the configured player weapon pool capacity for runtime diagnostics.</summary>
+        internal int WeaponPoolCapacity => m_weaponPoolCapacity;
+#endif
+
         internal Rect WorldPickupCollisionRect
         {
             get
@@ -65,6 +73,27 @@ namespace GenjitsuLAB.STG
                     m_pickupCollisionRect.height);
             }
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>Gets an active pooled player weapon by its dense runtime index.</summary>
+        internal Weapon GetActiveWeapon(int index)
+        {
+            return m_activeWeapons[index];
+        }
+
+        /// <summary>Tries to get the player fire point in world coordinates.</summary>
+        internal bool TryGetFirePointPosition(out Vector3 position)
+        {
+            if (m_firePoint == null)
+            {
+                position = default;
+                return false;
+            }
+
+            position = m_firePoint.position;
+            return true;
+        }
+#endif
 
         public void Initialize()
         {

@@ -7,6 +7,9 @@ namespace GenjitsuLAB.STG
     /// Loads, runs, and unloads one additive gameplay stage.
     /// </summary>
     public sealed class StageState : GameSceneState
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        , IDebugHudDataSource
+#endif
     {
         private const string k_stageRuntimeName = "StageRuntime";
 
@@ -51,6 +54,9 @@ namespace GenjitsuLAB.STG
         public override void Exit(GameSceneContext ctx)
         {
             ctx.inputActions.Player.Disable();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            ctx.debugHud?.Unbind(this);
+#endif
             m_isExiting = true;
             if (m_stageController != null)
             {
@@ -147,7 +153,138 @@ namespace GenjitsuLAB.STG
             ctx.inputActions.Player.Enable();
             m_isReady = true;
             m_loadOperation = null;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            ctx.debugHud?.Bind(this);
+#endif
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <inheritdoc/>
+        DebugHudCapacities IDebugHudDataSource.Capacities
+        {
+            get
+            {
+                int enemyCapacity = m_stageSetting.StraightEnemyPoolCapacity +
+                                    m_stageSetting.ShooterEnemyPoolCapacity;
+                int obstacleCount = m_stageController != null && m_stageController.Obstacles != null
+                    ? m_stageController.Obstacles.Length
+                    : 0;
+                int spawnerCount = m_stageController != null && m_stageController.Spawners != null
+                    ? m_stageController.Spawners.Length
+                    : 0;
+                int weaponCapacity = m_playerController != null ? m_playerController.WeaponPoolCapacity : 0;
+                int primitiveCapacity = 8 + weaponCapacity + (enemyCapacity * 2) +
+                                        m_stageSetting.BulletPoolCapacity + m_stageSetting.PickupPoolCapacity +
+                                        obstacleCount + (spawnerCount * 3);
+                return new DebugHudCapacities(
+                    primitiveCapacity,
+                    enemyCapacity,
+                    m_stageSetting.BulletPoolCapacity,
+                    weaponCapacity,
+                    m_stageSetting.PickupPoolCapacity,
+                    spawnerCount);
+            }
+        }
+
+        /// <inheritdoc/>
+        void IDebugHudDataSource.Populate(DebugHudFrameBuffer frameBuffer, GameSetting gameSetting)
+        {
+            frameBuffer.AddRect(gameSetting.PlayerMovementArea, DebugHudVisual.MoveArea, true);
+            frameBuffer.AddRect(gameSetting.EnemyRecycleArea, DebugHudVisual.EnemyRecycleArea, true);
+            frameBuffer.AddRect(gameSetting.BulletRecycleArea, DebugHudVisual.BulletRecycleArea, true);
+            frameBuffer.AddRect(gameSetting.WeaponRecycleArea, DebugHudVisual.WeaponRecycleArea, true);
+            frameBuffer.AddRect(gameSetting.PickupRecycleArea, DebugHudVisual.PickupRecycleArea, true);
+
+            if (!m_isReady || m_playerController == null)
+            {
+                return;
+            }
+
+            frameBuffer.AddRect(m_playerController.WorldDamageRect, DebugHudVisual.DamageRect, false);
+            frameBuffer.AddRect(m_playerController.WorldPickupCollisionRect, DebugHudVisual.PickupRect, false);
+            if (m_playerController.TryGetFirePointPosition(out Vector3 playerFirePoint))
+            {
+                frameBuffer.AddPoint(playerFirePoint, DebugHudVisual.FirePoint);
+            }
+
+            int weaponCount = m_playerController.ActiveWeaponCount;
+            for (int index = 0; index < weaponCount; index++)
+            {
+                frameBuffer.AddRect(
+                    m_playerController.GetActiveWeapon(index).WorldDamageRect,
+                    DebugHudVisual.DamageRect,
+                    false);
+            }
+
+            int enemyCount = m_enemyRuntime != null ? m_enemyRuntime.ActiveEnemyCount : 0;
+            int bulletCount = m_enemyRuntime != null ? m_enemyRuntime.ActiveBulletCount : 0;
+            for (int index = 0; index < enemyCount; index++)
+            {
+                EnemyController enemy = m_enemyRuntime.GetActiveEnemy(index);
+                frameBuffer.AddRect(enemy.WorldDamageRect, DebugHudVisual.DamageRect, false);
+                if (enemy.TryGetFirePointPosition(out Vector3 enemyFirePoint))
+                {
+                    frameBuffer.AddPoint(enemyFirePoint, DebugHudVisual.FirePoint);
+                }
+            }
+
+            for (int index = 0; index < bulletCount; index++)
+            {
+                frameBuffer.AddRect(
+                    m_enemyRuntime.GetActiveBullet(index).WorldDamageRect,
+                    DebugHudVisual.DamageRect,
+                    false);
+            }
+
+            StageObstacle[] obstacles = m_stageController.Obstacles;
+            for (int index = 0; index < obstacles.Length; index++)
+            {
+                frameBuffer.AddRect(obstacles[index].WorldDamageRect, DebugHudVisual.DamageRect, false);
+            }
+
+            for (int index = 0; index < m_activePickupCount; index++)
+            {
+                frameBuffer.AddRect(m_activePickups[index].WorldCollisionRect, DebugHudVisual.PickupRect, false);
+            }
+
+            StageEnemySpawner[] spawners = m_stageController.Spawners;
+            int triggeredSpawnerCount = 0;
+            float triggerLineMinX = gameSetting.EnemyRecycleArea.xMin;
+            float triggerLineMaxX = gameSetting.EnemyRecycleArea.xMax;
+            for (int index = 0; index < spawners.Length; index++)
+            {
+                StageEnemySpawner spawner = spawners[index];
+                DebugHudVisual visual = spawner.IsTriggered
+                    ? DebugHudVisual.TriggeredSpawner
+                    : DebugHudVisual.Spawner;
+                if (spawner.IsTriggered)
+                {
+                    triggeredSpawnerCount++;
+                }
+
+                Vector3 markerPosition = spawner.transform.position;
+                Vector3 activationPosition = new Vector3(
+                    markerPosition.x,
+                    spawner.ActivationY,
+                    markerPosition.z);
+                frameBuffer.AddPoint(markerPosition, visual);
+                frameBuffer.AddLine(markerPosition, activationPosition, visual, false);
+                frameBuffer.AddLine(
+                    new Vector3(triggerLineMinX, spawner.ActivationY, markerPosition.z),
+                    new Vector3(triggerLineMaxX, spawner.ActivationY, markerPosition.z),
+                    visual,
+                    true);
+            }
+
+            frameBuffer.Counts = new DebugHudCounts(
+                enemyCount,
+                bulletCount,
+                weaponCount,
+                m_activePickupCount,
+                triggeredSpawnerCount,
+                spawners.Length);
+        }
+#endif
 
         private void TickObstacleCollision(GameSceneContext ctx)
         {

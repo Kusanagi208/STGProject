@@ -297,6 +297,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GenjitsuLAB.STG.MainEngine
   m_gameSetting: {fileID: 11400000, guid: 52a7cd5eb107b6f4c84f2f59b734a866, type: 2}
+  m_debugCamera: {fileID: 519420031}
+  m_debugCanvas: {fileID: 1330655798}
 --- !u!4 &901451739
 Transform:
   m_ObjectHideFlags: 0

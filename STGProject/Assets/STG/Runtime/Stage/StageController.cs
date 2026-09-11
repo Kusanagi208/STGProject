@@ -53,6 +53,11 @@ namespace GenjitsuLAB.STG
 
         internal StageObstacle[] Obstacles => m_obstacles;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>Gets the authored stage spawners for runtime diagnostics.</summary>
+        internal StageEnemySpawner[] Spawners => m_spawners;
+#endif
+
         internal void Initialize()
         {
             m_layers = new[] { m_farBackground, m_midBackground, m_gameplay, m_foreground };

@@ -1,3 +1,4 @@
+using GenjitsuLAB.Animation;
 using UnityEngine;
 
 namespace GenjitsuLAB.STG
@@ -8,6 +9,8 @@ namespace GenjitsuLAB.STG
     public sealed class EnemyController : MonoBehaviour
     {
         [SerializeField] private SpriteRenderer m_spriteRenderer;
+        [SerializeField] private AnimationPack m_animationPack;
+        [SerializeField] private int m_animationId;
         [SerializeField] private EnemyType m_enemyType;
         [SerializeField] private Rect m_damageRect = new Rect(-0.35f, -0.35f, 0.7f, 0.7f);
         [Min(0f)]
@@ -21,6 +24,7 @@ namespace GenjitsuLAB.STG
 
         private int m_fireCooldownTicks;
         private bool m_hasReachedStop;
+        private AnimationPlayer m_animationPlayer;
 
         /// <summary>Gets the behavior type configured by this enemy prefab.</summary>
         public EnemyType EnemyType => m_enemyType;
@@ -42,6 +46,36 @@ namespace GenjitsuLAB.STG
         /// <summary>Gets whether this enemy has received its one lethal hit.</summary>
         public bool IsDestroyed { get; private set; }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>Tries to get this enemy's fire point in world coordinates.</summary>
+        internal bool TryGetFirePointPosition(out Vector3 position)
+        {
+            if (m_firePoint == null)
+            {
+                position = default;
+                return false;
+            }
+
+            position = m_firePoint.position;
+            return true;
+        }
+#endif
+
+        private void Awake()
+        {
+            if (m_spriteRenderer == null || m_animationPack == null)
+            {
+                Debug.LogError("EnemyController requires a SpriteRenderer and AnimationPack.", this);
+                return;
+            }
+
+            m_animationPlayer = new AnimationPlayer(m_spriteRenderer, m_animationPack.Clips);
+            if (!m_animationPlayer.HasAnimation(m_animationId))
+            {
+                Debug.LogError($"EnemyController animation ID {m_animationId} was not found.", this);
+            }
+        }
+
         internal void Spawn(Vector3 position)
         {
             transform.position = position;
@@ -50,6 +84,7 @@ namespace GenjitsuLAB.STG
             m_hasReachedStop = m_enemyType == GenjitsuLAB.STG.EnemyType.Shooter &&
                                position.y <= m_shooterStopY;
             m_fireCooldownTicks = m_firstShotDelayTicks;
+            m_animationPlayer?.ChangeAnim(m_animationId, true);
         }
 
         internal bool TickMovement(Rect recycleArea)
@@ -70,6 +105,7 @@ namespace GenjitsuLAB.STG
                 transform.position = position;
             }
 
+            m_animationPlayer?.Tick();
             return position.x >= recycleArea.xMin &&
                    position.x <= recycleArea.xMax &&
                    position.y >= recycleArea.yMin &&
@@ -127,6 +163,7 @@ namespace GenjitsuLAB.STG
 
         private void OnValidate()
         {
+            m_animationId = Mathf.Max(0, m_animationId);
             m_damageRect.width = Mathf.Max(0.01f, m_damageRect.width);
             m_damageRect.height = Mathf.Max(0.01f, m_damageRect.height);
             m_speedPerTick = Mathf.Max(0f, m_speedPerTick);

@@ -41,6 +41,20 @@ namespace GenjitsuLAB.STG
 
         internal int ActiveBulletCount => m_activeBulletCount;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>Gets an active enemy by its dense runtime index for diagnostics.</summary>
+        internal EnemyController GetActiveEnemy(int index)
+        {
+            return m_activeEnemies[index];
+        }
+
+        /// <summary>Gets an active enemy bullet by its dense runtime index for diagnostics.</summary>
+        internal Bullet GetActiveBullet(int index)
+        {
+            return m_activeBullets[index];
+        }
+#endif
+
         internal void TrySpawn(StageEnemySpawner spawner)
         {
             ComponentPool<EnemyController> pool = spawner.EnemyType == EnemyType.Shooter

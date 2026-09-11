@@ -18,9 +18,15 @@ namespace GenjitsuLAB.STG.Tests
         {
             Type enemyType = RequireRuntimeType("GenjitsuLAB.STG.EnemyController");
             Type bulletType = RequireRuntimeType("GenjitsuLAB.STG.Bullet");
-            VerifyPrefabComponent("Assets/STG/Prefab/EnemyStraight.prefab", enemyType);
-            VerifyPrefabComponent("Assets/STG/Prefab/EnemyShooter.prefab", enemyType);
-            VerifyPrefabComponent("Assets/STG/Prefab/EnemyBullet.prefab", bulletType);
+            VerifyEnemyAnimationConfiguration(
+                "Assets/STG/Prefab/Enemy1.prefab",
+                "Assets/STG/Art/EnemyStraightAnimPack.asset",
+                enemyType);
+            VerifyEnemyAnimationConfiguration(
+                "Assets/STG/Prefab/Enemy2.prefab",
+                "Assets/STG/Art/EnemyShooterAnimPack.asset",
+                enemyType);
+            VerifyPrefabComponent("Assets/STG/Prefab/Bullet.prefab", bulletType);
 
             UnityEngine.Object setting = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(
                 "Assets/STG/Prefab/StageSettingAsset.asset");
@@ -75,10 +81,17 @@ namespace GenjitsuLAB.STG.Tests
         }
 
         [Test]
+        public void EnemySpawn_CreatesAnimationPlayerAndAppliesFirstSprite()
+        {
+            VerifySpawnedEnemyAnimation("Assets/STG/Prefab/Enemy1.prefab");
+            VerifySpawnedEnemyAnimation("Assets/STG/Prefab/Enemy2.prefab");
+        }
+
+        [Test]
         public void Shooter_StopsThenFiresAtSnapshotDirectionOnConfiguredTicks()
         {
             Type enemyType = RequireRuntimeType("GenjitsuLAB.STG.EnemyController");
-            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/STG/Prefab/EnemyShooter.prefab");
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/STG/Prefab/Enemy2.prefab");
             GameObject enemyObject = UnityEngine.Object.Instantiate(prefab);
             Component enemy = enemyObject.GetComponent(enemyType);
 
@@ -124,7 +137,7 @@ namespace GenjitsuLAB.STG.Tests
         public void Bullet_KeepsLaunchDirectionAndUsesPositiveAreaOverlap()
         {
             Type bulletType = RequireRuntimeType("GenjitsuLAB.STG.Bullet");
-            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/STG/Prefab/EnemyBullet.prefab");
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/STG/Prefab/Bullet.prefab");
             GameObject bulletObject = UnityEngine.Object.Instantiate(prefab);
             Component bullet = bulletObject.GetComponent(bulletType);
 
@@ -207,6 +220,66 @@ namespace GenjitsuLAB.STG.Tests
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             Assert.That(prefab, Is.Not.Null, path);
             Assert.That(prefab.GetComponent(componentType), Is.Not.Null, path);
+        }
+
+        private static void VerifyEnemyAnimationConfiguration(
+            string prefabPath,
+            string animationPackPath,
+            Type enemyType)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            Assert.That(prefab, Is.Not.Null, prefabPath);
+            Component enemy = prefab.GetComponent(enemyType);
+            Assert.That(enemy, Is.Not.Null, prefabPath);
+
+            SerializedObject serializedEnemy = new SerializedObject(enemy);
+            Assert.That(
+                serializedEnemy.FindProperty("m_animationPack").objectReferenceValue,
+                Is.EqualTo(AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(animationPackPath)));
+            Assert.That(serializedEnemy.FindProperty("m_animationId").intValue, Is.Zero);
+
+            UnityEngine.Object[] animationAssets = AssetDatabase.LoadAllAssetsAtPath(animationPackPath);
+            bool foundSprite = false;
+            for (int index = 0; index < animationAssets.Length; index++)
+            {
+                SerializedObject serializedAsset = new SerializedObject(animationAssets[index]);
+                SerializedProperty elements = serializedAsset.FindProperty("m_elements");
+                if (elements == null || elements.arraySize == 0)
+                {
+                    continue;
+                }
+
+                foundSprite = elements.GetArrayElementAtIndex(0)
+                    .FindPropertyRelative("m_sprite")
+                    .objectReferenceValue != null;
+                if (foundSprite)
+                {
+                    break;
+                }
+            }
+
+            Assert.That(foundSprite, Is.True, animationPackPath);
+        }
+
+        private static void VerifySpawnedEnemyAnimation(string prefabPath)
+        {
+            Type enemyType = RequireRuntimeType("GenjitsuLAB.STG.EnemyController");
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            GameObject enemyObject = UnityEngine.Object.Instantiate(prefab);
+            Component enemy = enemyObject.GetComponent(enemyType);
+
+            try
+            {
+                Invoke(enemy, "Awake", Array.Empty<object>());
+                Invoke(enemy, "Spawn", new object[] { Vector3.zero });
+                object animationPlayer = enemyType.GetField("m_animationPlayer", k_instanceFlags).GetValue(enemy);
+                Assert.That(animationPlayer, Is.Not.Null, prefabPath);
+                Assert.That(enemyObject.GetComponentInChildren<SpriteRenderer>().sprite, Is.Not.Null, prefabPath);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(enemyObject);
+            }
         }
 
         private static Component[] FindActiveComponents(Type componentType)
