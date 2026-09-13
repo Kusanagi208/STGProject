@@ -15,6 +15,8 @@ namespace GenjitsuLAB.STG
         private static MainEngine s_instance;
 
         [SerializeField] private GameSetting m_gameSetting;
+        [SerializeField] private PlayerLifeHud m_playerLifeHud;
+        [SerializeField] private StageFlowHud m_stageFlowHud;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         [SerializeField] private Camera m_debugCamera;
         [SerializeField] private Canvas m_debugCanvas;
@@ -26,6 +28,7 @@ namespace GenjitsuLAB.STG
         private GameSceneFSM m_gameSceneFSM;
         private GameSceneContext m_gameSceneContext;
         private InputActions m_inputActions;
+        private PlayerLifeState m_playerLifeState;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private DebugHudController m_debugHud;
 #endif
@@ -39,7 +42,6 @@ namespace GenjitsuLAB.STG
             }
 
             s_instance = this;
-            DontDestroyOnLoad(transform.root.gameObject);
 
             if (!ValidateSettings())
             {
@@ -48,7 +50,16 @@ namespace GenjitsuLAB.STG
             }
 
             m_inputActions = new InputActions();
-            m_gameSceneContext = new GameSceneContext(m_gameSetting, m_inputActions);
+            m_playerLifeState = new PlayerLifeState(
+                m_gameSetting.InitialLifeCount,
+                m_gameSetting.MaximumLifeCount);
+            m_playerLifeHud.Bind(m_playerLifeState);
+            m_stageFlowHud.Hide();
+            m_gameSceneContext = new GameSceneContext(
+                m_gameSetting,
+                m_inputActions,
+                m_playerLifeState,
+                m_stageFlowHud);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             m_debugHud = DebugHudController.TryCreate(m_debugCamera, m_debugCanvas, m_gameSetting, this);
             m_gameSceneContext.debugHud = m_debugHud;
@@ -64,6 +75,7 @@ namespace GenjitsuLAB.STG
                 return;
             }
 
+            DontDestroyOnLoad(transform.root.gameObject);
             m_frameCount = 0;
             m_gameSceneContext.frame = m_frameCount;
             m_gameSceneFSM.ChangeState(new StageState(m_gameSetting.InitialStage));
@@ -94,6 +106,9 @@ namespace GenjitsuLAB.STG
             m_gameSceneFSM?.Stop();
             m_gameSceneFSM = null;
             m_gameSceneContext = null;
+            m_playerLifeHud?.Unbind();
+            m_stageFlowHud?.Hide();
+            m_playerLifeState = null;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             m_debugHud?.Dispose();
@@ -155,6 +170,27 @@ namespace GenjitsuLAB.STG
                 return false;
             }
 
+            if (m_playerLifeHud == null)
+            {
+                Debug.LogError("MainEngine requires a PlayerLifeHud component.", this);
+                return false;
+            }
+
+            if (m_stageFlowHud == null)
+            {
+                Debug.LogError("MainEngine requires a StageFlowHud component.", this);
+                return false;
+            }
+
+            if (m_gameSetting.MaximumLifeCount <= 0 ||
+                m_gameSetting.MaximumLifeCount > 99 ||
+                m_gameSetting.InitialLifeCount < 0 ||
+                m_gameSetting.InitialLifeCount > m_gameSetting.MaximumLifeCount)
+            {
+                Debug.LogError("GameSetting life counts must satisfy 0 <= initial <= maximum <= 99.", m_gameSetting);
+                return false;
+            }
+
             if (m_gameSetting.InitialStage == null)
             {
                 Debug.LogError("GameSetting requires an initial stage.", m_gameSetting);
@@ -164,6 +200,15 @@ namespace GenjitsuLAB.STG
             if (string.IsNullOrWhiteSpace(m_gameSetting.InitialStage.SceneName))
             {
                 Debug.LogError("Initial StageSetting requires an additive scene name.", m_gameSetting.InitialStage);
+                return false;
+            }
+
+            if (m_gameSetting.InitialStage.PlayerEntrySpeedPerTick <= 0f ||
+                m_gameSetting.InitialStage.StartNoticeTicks <= 0)
+            {
+                Debug.LogError(
+                    "Initial StageSetting player entry speed and START duration must be positive.",
+                    m_gameSetting.InitialStage);
                 return false;
             }
 

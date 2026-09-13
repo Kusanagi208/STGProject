@@ -9,7 +9,12 @@ namespace GenjitsuLAB.STG
     public sealed class StageSetting : ScriptableObject
     {
         [SerializeField] private string m_sceneName = "Stage01";
+        [SerializeField] private Vector3 m_playerEntryPosition = new Vector3(0f, -1.5f, 0f);
         [SerializeField] private Vector3 m_playerSpawnPosition = Vector3.up;
+        [Min(0.001f)]
+        [SerializeField] private float m_playerEntrySpeedPerTick = 0.03f;
+        [Min(1)]
+        [SerializeField] private int m_startNoticeTicks = 60;
         [SerializeField] private Pickup m_pickupPrefab;
         [SerializeField] private Vector3 m_testPickupSpawnPosition = new Vector3(0f, 8f, 0f);
         [Min(1)]
@@ -17,6 +22,7 @@ namespace GenjitsuLAB.STG
         [SerializeField] private EnemyController m_straightEnemyPrefab;
         [SerializeField] private EnemyController m_shooterEnemyPrefab;
         [SerializeField] private Bullet m_bulletPrefab;
+        [SerializeField] private BossController m_bossPrefab;
         [Min(1)]
         [SerializeField] private int m_straightEnemyPoolCapacity = 8;
         [Min(1)]
@@ -30,9 +36,20 @@ namespace GenjitsuLAB.STG
         public string SceneName => m_sceneName;
 
         /// <summary>
+        /// Gets the world-space position from which the player enters the visible playfield.
+        /// </summary>
+        public Vector3 PlayerEntryPosition => m_playerEntryPosition;
+
+        /// <summary>
         /// Gets the world-space player spawn position.
         /// </summary>
         public Vector3 PlayerSpawnPosition => m_playerSpawnPosition;
+
+        /// <summary>Gets the fixed distance moved by the player on each entry tick.</summary>
+        public float PlayerEntrySpeedPerTick => m_playerEntrySpeedPerTick;
+
+        /// <summary>Gets how many gameplay ticks the START notification remains visible.</summary>
+        public int StartNoticeTicks => m_startNoticeTicks;
 
         /// <summary>
         /// Gets the pickup prefab prewarmed for this stage.
@@ -58,6 +75,9 @@ namespace GenjitsuLAB.STG
         /// <summary>Gets the enemy projectile prefab for this stage.</summary>
         public Bullet BulletPrefab => m_bulletPrefab;
 
+        /// <summary>Gets the single level-scoped boss prefab for this stage.</summary>
+        public BossController BossPrefab => m_bossPrefab;
+
         /// <summary>Gets the fixed Straight enemy pool capacity.</summary>
         public int StraightEnemyPoolCapacity => m_straightEnemyPoolCapacity;
 
@@ -69,6 +89,8 @@ namespace GenjitsuLAB.STG
 
         private void OnValidate()
         {
+            m_playerEntrySpeedPerTick = Mathf.Max(0.001f, m_playerEntrySpeedPerTick);
+            m_startNoticeTicks = Mathf.Max(1, m_startNoticeTicks);
             m_pickupPoolCapacity = Mathf.Max(1, m_pickupPoolCapacity);
             m_straightEnemyPoolCapacity = Mathf.Max(1, m_straightEnemyPoolCapacity);
             m_shooterEnemyPoolCapacity = Mathf.Max(1, m_shooterEnemyPoolCapacity);

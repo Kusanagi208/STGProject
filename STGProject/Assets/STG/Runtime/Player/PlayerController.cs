@@ -35,6 +35,10 @@ namespace GenjitsuLAB.STG
         private Weapon[] m_activeWeapons;
         private int m_activeWeaponCount;
         private int m_fireCooldownTicks;
+        private Vector3 m_entryTargetPosition;
+        private float m_entrySpeedPerTick;
+        private bool m_isEntering;
+        private bool m_isInitialized;
 
         /// <summary>
         /// Raised once when the player collects a pickup.
@@ -50,6 +54,9 @@ namespace GenjitsuLAB.STG
         /// Gets whether this player has been destroyed for the current stage run.
         /// </summary>
         public bool IsDestroyed { get; private set; }
+
+        /// <summary>Gets whether the player is moving through the protected entry sequence.</summary>
+        public bool IsEntering => m_isEntering;
 
         internal Rect WorldDamageRect => ToWorldRect(m_damageRect);
 
@@ -95,11 +102,20 @@ namespace GenjitsuLAB.STG
         }
 #endif
 
+        private void Awake()
+        {
+            EnsureAnimationPlayer();
+        }
+
+        /// <summary>Initializes the player animation and fixed-capacity weapon pool once.</summary>
         public void Initialize()
         {
-            IsDestroyed = false;
-            m_spriteRenderer.enabled = true;
-            m_animPlayer = new AnimationPlayer(m_spriteRenderer, m_animationPack.Clips);
+            if (m_isInitialized)
+            {
+                return;
+            }
+
+            EnsureAnimationPlayer();
             m_resolvedIdleAnimId = ResolveAnimationId(m_idleAnimId, "Idle", k_invalidAnimId);
             m_resolvedLeftBankingAnimId = ResolveAnimationId(
                 m_leftBankingAnimId,
@@ -113,11 +129,14 @@ namespace GenjitsuLAB.STG
             m_currentMovementAnimId = k_invalidAnimId;
             ChangeMovementAnimation(m_resolvedIdleAnimId);
             InitializeWeaponPool();
+            IsDestroyed = false;
+            m_spriteRenderer.enabled = true;
+            m_isInitialized = true;
         }
 
         public void Tick(GameSceneContext ctx)
         {
-            if (IsDestroyed)
+            if (IsDestroyed || m_isEntering)
             {
                 return;
             }
@@ -185,6 +204,59 @@ namespace GenjitsuLAB.STG
             }
 
             IsDestroyed = true;
+            m_isEntering = false;
+            ReturnAllWeapons();
+            m_spriteRenderer.enabled = false;
+            Destroyed?.Invoke();
+        }
+
+        /// <summary>Begins a protected, fixed-tick entry using the existing player instance.</summary>
+        internal void BeginEntry(Vector3 startPosition, Vector3 targetPosition, float speedPerTick)
+        {
+            ReturnAllWeapons();
+            transform.position = startPosition;
+            m_entryTargetPosition = targetPosition;
+            m_entrySpeedPerTick = Mathf.Max(0f, speedPerTick);
+            m_fireCooldownTicks = 0;
+            IsDestroyed = false;
+            m_isEntering = true;
+            m_spriteRenderer.enabled = true;
+            m_currentMovementAnimId = m_resolvedIdleAnimId;
+            m_animPlayer?.ChangeAnim(m_resolvedIdleAnimId, true);
+        }
+
+        /// <summary>Advances the protected entry and reports when the target position is reached.</summary>
+        internal bool TickEntry()
+        {
+            m_animPlayer?.Tick();
+            if (!m_isEntering)
+            {
+                return true;
+            }
+
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                m_entryTargetPosition,
+                m_entrySpeedPerTick);
+            if (transform.position != m_entryTargetPosition)
+            {
+                return false;
+            }
+
+            transform.position = m_entryTargetPosition;
+            m_isEntering = false;
+            return true;
+        }
+
+        /// <summary>Advances player presentation while gameplay remains paused.</summary>
+        internal void TickPresentation()
+        {
+            m_animPlayer?.Tick();
+        }
+
+        /// <summary>Returns every active player weapon without rebuilding the pool.</summary>
+        internal void ReturnAllWeapons()
+        {
             m_weaponPool?.ReturnAll();
             if (m_activeWeapons != null)
             {
@@ -192,8 +264,6 @@ namespace GenjitsuLAB.STG
             }
 
             m_activeWeaponCount = 0;
-            m_spriteRenderer.enabled = false;
-            Destroyed?.Invoke();
         }
 
         private Rect ToWorldRect(Rect localRect)
@@ -208,6 +278,11 @@ namespace GenjitsuLAB.STG
 
         private void InitializeWeaponPool()
         {
+            if (m_weaponPool != null)
+            {
+                return;
+            }
+
             if (m_firePoint == null || m_weaponPrefab == null)
             {
                 Debug.LogError("PlayerController requires a FirePoint and Weapon prefab. Shooting is disabled.", this);
@@ -218,6 +293,22 @@ namespace GenjitsuLAB.STG
             m_activeWeapons = new Weapon[m_weaponPoolCapacity];
             m_activeWeaponCount = 0;
             m_fireCooldownTicks = 0;
+        }
+
+        private void EnsureAnimationPlayer()
+        {
+            if (m_animPlayer != null)
+            {
+                return;
+            }
+
+            if (m_spriteRenderer == null || m_animationPack == null)
+            {
+                Debug.LogError("PlayerController requires a SpriteRenderer and AnimationPack.", this);
+                return;
+            }
+
+            m_animPlayer = new AnimationPlayer(m_spriteRenderer, m_animationPack.Clips);
         }
 
         private void UpdateFire(bool isPressed)

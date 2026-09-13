@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5361933612903262646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c1db7c9f3c28d24f9062e34948ae33a, type: 3}
+  m_Name: operational
+  m_EditorClassIdentifier: GenjitsuLAB.Core::GenjitsuLAB.Animation.AnimationClip
+  m_animId: 0
+  m_animName: operational
+  m_isLoop: 1
+  m_elements:
+  - m_sprite: {fileID: -1601004718, guid: 8b2c94d93e929764e8883569f609f372, type: 3}
+    m_duration: 6
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: -421292895, guid: 8b2c94d93e929764e8883569f609f372, type: 3}
+    m_duration: 6
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 634200375, guid: 8b2c94d93e929764e8883569f609f372, type: 3}
+    m_duration: 6
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: -1704089317, guid: 8b2c94d93e929764e8883569f609f372, type: 3}
+    m_duration: 6
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  m_totalTicks: 24
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da36d1ea8dcd428cb9de648e19bf2d43, type: 3}
+  m_Name: BossWingAnimPack
+  m_EditorClassIdentifier: GenjitsuLAB.Core::GenjitsuLAB.Animation.AnimationPack
+  m_clips:
+  - {fileID: -5361933612903262646}
+  - {fileID: 5328249052386717291}
+--- !u!114 &5328249052386717291
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c1db7c9f3c28d24f9062e34948ae33a, type: 3}
+  m_Name: damaged
+  m_EditorClassIdentifier: GenjitsuLAB.Core::GenjitsuLAB.Animation.AnimationClip
+  m_animId: 1
+  m_animName: damaged
+  m_isLoop: 1
+  m_elements:
+  - m_sprite: {fileID: -1892341054, guid: 8b2c94d93e929764e8883569f609f372, type: 3}
+    m_duration: 6
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: -1920555556, guid: 8b2c94d93e929764e8883569f609f372, type: 3}
+    m_duration: 6
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: 1670106729, guid: 8b2c94d93e929764e8883569f609f372, type: 3}
+    m_duration: 6
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  - m_sprite: {fileID: -1569318561, guid: 8b2c94d93e929764e8883569f609f372, type: 3}
+    m_duration: 6
+    m_hitBoxes: []
+    m_hurtBoxes: []
+  m_totalTicks: 24

@@ -13,13 +13,20 @@ namespace GenjitsuLAB.STG
         private readonly ComponentPool<Bullet> m_bulletPool;
         private readonly EnemyController[] m_activeEnemies;
         private readonly Bullet[] m_activeBullets;
+        private readonly BossController m_bossPrefab;
+        private readonly BossShot[] m_bossShots;
+        private readonly Transform m_parent;
 
         private int m_activeEnemyCount;
         private int m_activeBulletCount;
+        private BossController m_activeBoss;
         private bool m_isDisposed;
+        private bool m_bossDefeatedThisTick;
 
         internal EnemyRuntime(StageSetting setting, Transform parent)
         {
+            m_parent = parent;
+            m_bossPrefab = setting.BossPrefab;
             m_straightPool = new ComponentPool<EnemyController>(
                 setting.StraightEnemyPrefab,
                 setting.StraightEnemyPoolCapacity,
@@ -35,11 +42,19 @@ namespace GenjitsuLAB.STG
             m_activeEnemies = new EnemyController[
                 setting.StraightEnemyPoolCapacity + setting.ShooterEnemyPoolCapacity];
             m_activeBullets = new Bullet[setting.BulletPoolCapacity];
+            m_bossShots = new BossShot[5];
         }
+
+        internal event Action BossDefeated;
 
         internal int ActiveEnemyCount => m_activeEnemyCount;
 
         internal int ActiveBulletCount => m_activeBulletCount;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>Gets the active level-scoped boss for runtime diagnostics.</summary>
+        internal BossController ActiveBoss => m_activeBoss;
+#endif
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         /// <summary>Gets an active enemy by its dense runtime index for diagnostics.</summary>
@@ -69,15 +84,50 @@ namespace GenjitsuLAB.STG
             m_activeEnemies[m_activeEnemyCount++] = enemy;
         }
 
+        internal bool TrySpawn(StageBossSpawner spawner)
+        {
+            if (m_activeBoss != null || m_bossPrefab == null)
+            {
+                return false;
+            }
+
+            m_activeBoss = UnityEngine.Object.Instantiate(
+                m_bossPrefab,
+                spawner.transform.position,
+                Quaternion.identity,
+                m_parent);
+            m_activeBoss.Defeated += OnBossDefeated;
+            m_activeBoss.Spawn(spawner.transform.position);
+            return true;
+        }
+
         internal bool Tick(PlayerController player, Rect enemyRecycleArea, Rect bulletRecycleArea)
         {
+            m_bossDefeatedThisTick = false;
             bool wasPlayerDestroyed = player.IsDestroyed;
             TickEnemyMovement(enemyRecycleArea);
+            m_activeBoss?.TickMovementAndAnimation();
             ResolveWeaponHits(player);
+            m_activeBoss?.ResolveWeaponHits(player);
+            if (m_bossDefeatedThisTick)
+            {
+                return false;
+            }
+
             ResolveBodyHits(player);
+            ResolveBossBodyHit(player);
             TickEnemyFire(player);
+            TickBossFire(player);
             TickBullets(player, bulletRecycleArea);
             return !wasPlayerDestroyed && player.IsDestroyed;
+        }
+
+        /// <summary>Returns every active enemy bullet to the fixed-capacity pool.</summary>
+        internal void ReturnAllBullets()
+        {
+            m_bulletPool.ReturnAll();
+            Array.Clear(m_activeBullets, 0, m_activeBulletCount);
+            m_activeBulletCount = 0;
         }
 
         /// <inheritdoc/>
@@ -92,6 +142,14 @@ namespace GenjitsuLAB.STG
             m_straightPool.Dispose();
             m_shooterPool.Dispose();
             m_bulletPool.Dispose();
+            if (m_activeBoss != null)
+            {
+                m_activeBoss.Defeated -= OnBossDefeated;
+                UnityEngine.Object.Destroy(m_activeBoss.gameObject);
+                m_activeBoss = null;
+            }
+
+            BossDefeated = null;
             Array.Clear(m_activeEnemies, 0, m_activeEnemyCount);
             Array.Clear(m_activeBullets, 0, m_activeBulletCount);
             m_activeEnemyCount = 0;
@@ -208,6 +266,46 @@ namespace GenjitsuLAB.STG
 
                 index++;
             }
+        }
+
+        private void ResolveBossBodyHit(PlayerController player)
+        {
+            if (player.IsDestroyed || m_activeBoss == null)
+            {
+                return;
+            }
+
+            if (m_activeBoss.OverlapsOperationalPart(player.WorldDamageRect))
+            {
+                player.DestroyByDamage();
+            }
+        }
+
+        private void TickBossFire(PlayerController player)
+        {
+            if (player.IsDestroyed || m_activeBoss == null)
+            {
+                return;
+            }
+
+            int shotCount = m_activeBoss.CollectShots(player.transform.position, m_bossShots);
+            for (int index = 0; index < shotCount; index++)
+            {
+                if (!m_bulletPool.TryRent(out Bullet bullet))
+                {
+                    continue;
+                }
+
+                BossShot shot = m_bossShots[index];
+                bullet.Spawn(shot.Position, shot.Direction);
+                m_activeBullets[m_activeBulletCount++] = bullet;
+            }
+        }
+
+        private void OnBossDefeated()
+        {
+            m_bossDefeatedThisTick = true;
+            BossDefeated?.Invoke();
         }
 
         private void ReturnEnemyAt(int index)

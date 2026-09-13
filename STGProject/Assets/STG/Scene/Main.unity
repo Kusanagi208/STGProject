@@ -297,6 +297,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GenjitsuLAB.STG.MainEngine
   m_gameSetting: {fileID: 11400000, guid: 52a7cd5eb107b6f4c84f2f59b734a866, type: 2}
+  m_playerLifeHud: {fileID: 1184078874}
+  m_stageFlowHud: {fileID: 1330655800}
   m_debugCamera: {fileID: 519420031}
   m_debugCanvas: {fileID: 1330655798}
 --- !u!4 &901451739
@@ -325,6 +327,7 @@ GameObject:
   - component: {fileID: 1184078871}
   - component: {fileID: 1184078873}
   - component: {fileID: 1184078872}
+  - component: {fileID: 1184078874}
   m_Layer: 5
   m_Name: left
   m_TagString: Untagged
@@ -389,6 +392,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1184078870}
   m_CullTransparentMesh: 1
+--- !u!114 &1184078874
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1184078870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a148b11d5d2649d59cc38d6e5b7e880b, type: 3}
+  m_Name: ''
+  m_EditorClassIdentifier: Assembly-CSharp::GenjitsuLAB.STG.PlayerLifeHud
+  m_lifeIconSprite: {fileID: 21300000, guid: 2252a1d512e350d42a4292e57c099d51, type: 3}
 --- !u!1 &1330655795
 GameObject:
   m_ObjectHideFlags: 0
@@ -401,6 +417,7 @@ GameObject:
   - component: {fileID: 1330655798}
   - component: {fileID: 1330655797}
   - component: {fileID: 1330655796}
+  - component: {fileID: 1330655800}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -425,6 +442,18 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 55
+--- !u!114 &1330655800
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1330655795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5676f33a94348beb76ec45e9973d4c1, type: 3}
+  m_Name: ''
+  m_EditorClassIdentifier: Assembly-CSharp::GenjitsuLAB.STG.StageFlowHud
 --- !u!114 &1330655797
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -13,18 +13,32 @@ namespace GenjitsuLAB.STG
     {
         private const string k_stageRuntimeName = "StageRuntime";
 
+        private enum StageRunPhase
+        {
+            Loading,
+            PlayerEntering,
+            StartNotice,
+            Playing,
+            GameOver
+        }
+
         private readonly StageSetting m_stageSetting;
 
         private AsyncOperation m_loadOperation;
         private Transform m_stageRoot;
         private StageController m_stageController;
         private PlayerController m_playerController;
+        private PlayerLifeState m_playerLifeState;
         private EnemyRuntime m_enemyRuntime;
         private ComponentPool<Pickup> m_pickupPool;
         private Pickup[] m_activePickups;
         private int m_activePickupCount;
         private bool m_isReady;
         private bool m_isExiting;
+        private bool m_pendingPlayerDestroyed;
+        private bool m_pendingBossDefeated;
+        private int m_startNoticeRemainingTicks;
+        private StageRunPhase m_phase;
 
         /// <summary>Creates a gameplay state backed by the specified stage scene.</summary>
         public StageState(StageSetting stageSetting)
@@ -36,7 +50,11 @@ namespace GenjitsuLAB.STG
         public override void Enter(GameSceneContext ctx)
         {
             ctx.inputActions.Player.Disable();
+            ctx.StageFlowHud?.Hide();
             m_isExiting = false;
+            m_pendingPlayerDestroyed = false;
+            m_pendingBossDefeated = false;
+            m_phase = StageRunPhase.Loading;
             if (m_stageSetting == null || string.IsNullOrWhiteSpace(m_stageSetting.SceneName))
             {
                 Debug.LogError("StageState requires a valid StageSetting with a scene name.");
@@ -61,9 +79,21 @@ namespace GenjitsuLAB.STG
             if (m_stageController != null)
             {
                 m_stageController.SpawnerTriggered -= OnSpawnerTriggered;
+                m_stageController.BossSpawnerTriggered -= OnBossSpawnerTriggered;
             }
 
-            m_enemyRuntime?.Dispose();
+            if (m_playerController != null)
+            {
+                m_playerController.PickupCollected -= OnPickupCollected;
+                m_playerController.Destroyed -= OnPlayerDestroyed;
+            }
+
+            if (m_enemyRuntime != null)
+            {
+                m_enemyRuntime.BossDefeated -= OnBossDefeated;
+                m_enemyRuntime.Dispose();
+            }
+
             m_enemyRuntime = null;
             m_pickupPool?.Dispose();
             m_pickupPool = null;
@@ -88,8 +118,13 @@ namespace GenjitsuLAB.STG
             m_loadOperation = null;
             m_stageController = null;
             m_playerController = null;
+            m_playerLifeState = null;
             m_stageRoot = null;
             m_isReady = false;
+            m_pendingPlayerDestroyed = false;
+            m_pendingBossDefeated = false;
+            m_phase = StageRunPhase.Loading;
+            ctx.StageFlowHud?.Hide();
         }
 
         /// <inheritdoc/>
@@ -101,19 +136,18 @@ namespace GenjitsuLAB.STG
                 return;
             }
 
-            m_stageController.TickScroll();
-            m_playerController.Tick(ctx);
-            TickObstacleCollision(ctx);
-            if (m_enemyRuntime.Tick(
-                    m_playerController,
-                    ctx.gameSetting.EnemyRecycleArea,
-                    ctx.gameSetting.BulletRecycleArea))
+            switch (m_phase)
             {
-                ctx.inputActions.Player.Disable();
+                case StageRunPhase.PlayerEntering:
+                    TickPlayerEntry(ctx);
+                    break;
+                case StageRunPhase.StartNotice:
+                    TickStartNotice(ctx);
+                    break;
+                case StageRunPhase.Playing:
+                    TickPlaying(ctx);
+                    break;
             }
-
-            m_stageController.TickSpawners();
-            TickPickups(ctx.gameSetting.PickupRecycleArea);
         }
 
         private void TryCompleteLoad(GameSceneContext ctx)
@@ -142,20 +176,132 @@ namespace GenjitsuLAB.STG
             SceneManager.MoveGameObjectToScene(m_stageRoot.gameObject, stageScene);
             m_playerController = Object.Instantiate(
                 ctx.gameSetting.PlayerPrefab,
-                m_stageSetting.PlayerSpawnPosition,
+                m_stageSetting.PlayerEntryPosition,
                 Quaternion.identity,
                 m_stageRoot);
             m_playerController.Initialize();
+            m_playerLifeState = ctx.PlayerLives;
+            m_playerController.PickupCollected += OnPickupCollected;
+            m_playerController.Destroyed += OnPlayerDestroyed;
             m_enemyRuntime = new EnemyRuntime(m_stageSetting, m_stageRoot);
+            m_enemyRuntime.BossDefeated += OnBossDefeated;
             m_stageController.SpawnerTriggered += OnSpawnerTriggered;
+            m_stageController.BossSpawnerTriggered += OnBossSpawnerTriggered;
             InitializePickupPool();
             TrySpawnTestPickup();
-            ctx.inputActions.Player.Enable();
             m_isReady = true;
             m_loadOperation = null;
+            if (m_playerLifeState == null || m_playerLifeState.CurrentLives <= 0)
+            {
+                m_playerController.DestroyByDamage();
+                m_pendingPlayerDestroyed = false;
+                EnterGameOver(ctx, StageEndReason.LivesDepleted);
+            }
+            else
+            {
+                BeginPlayerEntry(ctx, StageScrollPauseReason.StageStart);
+            }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             ctx.debugHud?.Bind(this);
 #endif
+        }
+
+        private void TickPlayerEntry(GameSceneContext ctx)
+        {
+            if (!m_playerController.TickEntry())
+            {
+                return;
+            }
+
+            m_startNoticeRemainingTicks = m_stageSetting.StartNoticeTicks;
+            ctx.StageFlowHud?.ShowStart();
+            m_phase = StageRunPhase.StartNotice;
+        }
+
+        private void TickStartNotice(GameSceneContext ctx)
+        {
+            m_playerController.TickPresentation();
+            m_startNoticeRemainingTicks--;
+            if (m_startNoticeRemainingTicks > 0)
+            {
+                return;
+            }
+
+            ctx.StageFlowHud?.Hide();
+            m_stageController.Resume(StageScrollPauseReason.StageStart);
+            m_stageController.Resume(StageScrollPauseReason.PlayerRespawn);
+            ctx.inputActions.Player.Enable();
+            m_phase = StageRunPhase.Playing;
+        }
+
+        private void TickPlaying(GameSceneContext ctx)
+        {
+            m_stageController.TickScroll();
+            m_playerController.Tick(ctx);
+            TickObstacleCollision();
+            m_enemyRuntime.Tick(
+                m_playerController,
+                ctx.gameSetting.EnemyRecycleArea,
+                ctx.gameSetting.BulletRecycleArea);
+            if (m_pendingBossDefeated)
+            {
+                EnterGameOver(ctx, StageEndReason.BossDefeated);
+                return;
+            }
+
+            if (m_pendingPlayerDestroyed)
+            {
+                ResolvePlayerDestroyed(ctx);
+                return;
+            }
+
+            m_stageController.TickSpawners();
+            TickPickups(ctx.gameSetting.PickupRecycleArea);
+        }
+
+        private void BeginPlayerEntry(GameSceneContext ctx, StageScrollPauseReason pauseReason)
+        {
+            ctx.inputActions.Player.Disable();
+            ctx.StageFlowHud?.Hide();
+            m_stageController.Pause(pauseReason);
+            m_playerController.BeginEntry(
+                m_stageSetting.PlayerEntryPosition,
+                m_stageSetting.PlayerSpawnPosition,
+                m_stageSetting.PlayerEntrySpeedPerTick);
+            m_pendingPlayerDestroyed = false;
+            m_phase = StageRunPhase.PlayerEntering;
+        }
+
+        private void ResolvePlayerDestroyed(GameSceneContext ctx)
+        {
+            m_pendingPlayerDestroyed = false;
+            ctx.inputActions.Player.Disable();
+            m_enemyRuntime.ReturnAllBullets();
+            m_playerLifeState?.TryConsumeLife();
+            if (m_playerLifeState == null || m_playerLifeState.CurrentLives <= 0)
+            {
+                EnterGameOver(ctx, StageEndReason.LivesDepleted);
+                return;
+            }
+
+            BeginPlayerEntry(ctx, StageScrollPauseReason.PlayerRespawn);
+        }
+
+        private void EnterGameOver(GameSceneContext ctx, StageEndReason reason)
+        {
+            if (m_phase == StageRunPhase.GameOver)
+            {
+                return;
+            }
+
+            m_pendingPlayerDestroyed = false;
+            m_pendingBossDefeated = false;
+            m_phase = StageRunPhase.GameOver;
+            ctx.inputActions.Player.Disable();
+            m_stageController.Pause(StageScrollPauseReason.Result);
+            m_enemyRuntime.ReturnAllBullets();
+            m_playerController.ReturnAllWeapons();
+            ctx.StageFlowHud?.ShowGameOver(reason);
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -172,17 +318,20 @@ namespace GenjitsuLAB.STG
                 int spawnerCount = m_stageController != null && m_stageController.Spawners != null
                     ? m_stageController.Spawners.Length
                     : 0;
+                int bossSpawnerCount = m_stageController != null && m_stageController.BossSpawners != null
+                    ? m_stageController.BossSpawners.Length
+                    : 0;
                 int weaponCapacity = m_playerController != null ? m_playerController.WeaponPoolCapacity : 0;
-                int primitiveCapacity = 8 + weaponCapacity + (enemyCapacity * 2) +
+                int primitiveCapacity = 14 + weaponCapacity + (enemyCapacity * 2) +
                                         m_stageSetting.BulletPoolCapacity + m_stageSetting.PickupPoolCapacity +
-                                        obstacleCount + (spawnerCount * 3);
+                                        obstacleCount + ((spawnerCount + bossSpawnerCount) * 3);
                 return new DebugHudCapacities(
                     primitiveCapacity,
                     enemyCapacity,
                     m_stageSetting.BulletPoolCapacity,
                     weaponCapacity,
                     m_stageSetting.PickupPoolCapacity,
-                    spawnerCount);
+                    spawnerCount + bossSpawnerCount);
             }
         }
 
@@ -226,6 +375,14 @@ namespace GenjitsuLAB.STG
                 {
                     frameBuffer.AddPoint(enemyFirePoint, DebugHudVisual.FirePoint);
                 }
+            }
+
+            BossController boss = m_enemyRuntime != null ? m_enemyRuntime.ActiveBoss : null;
+            if (boss != null)
+            {
+                AddBossPartDebug(frameBuffer, boss.LeftPart);
+                AddBossPartDebug(frameBuffer, boss.CenterPart);
+                AddBossPartDebug(frameBuffer, boss.RightPart);
             }
 
             for (int index = 0; index < bulletCount; index++)
@@ -276,17 +433,57 @@ namespace GenjitsuLAB.STG
                     true);
             }
 
+            StageBossSpawner[] bossSpawners = m_stageController.BossSpawners;
+            for (int index = 0; index < bossSpawners.Length; index++)
+            {
+                StageBossSpawner spawner = bossSpawners[index];
+                DebugHudVisual visual = spawner.IsTriggered
+                    ? DebugHudVisual.TriggeredSpawner
+                    : DebugHudVisual.Spawner;
+                if (spawner.IsTriggered)
+                {
+                    triggeredSpawnerCount++;
+                }
+
+                Vector3 markerPosition = spawner.transform.position;
+                Vector3 activationPosition = new Vector3(
+                    markerPosition.x,
+                    spawner.ActivationY,
+                    markerPosition.z);
+                frameBuffer.AddPoint(markerPosition, visual);
+                frameBuffer.AddLine(markerPosition, activationPosition, visual, false);
+                frameBuffer.AddLine(
+                    new Vector3(triggerLineMinX, spawner.ActivationY, markerPosition.z),
+                    new Vector3(triggerLineMaxX, spawner.ActivationY, markerPosition.z),
+                    visual,
+                    true);
+            }
+
             frameBuffer.Counts = new DebugHudCounts(
                 enemyCount,
                 bulletCount,
                 weaponCount,
                 m_activePickupCount,
                 triggeredSpawnerCount,
-                spawners.Length);
+                spawners.Length + bossSpawners.Length);
+        }
+
+        private static void AddBossPartDebug(DebugHudFrameBuffer frameBuffer, BossPartController part)
+        {
+            if (!part.IsOperational)
+            {
+                return;
+            }
+
+            frameBuffer.AddRect(part.WorldDamageRect, DebugHudVisual.DamageRect, false);
+            if (part.TryGetFirePointPosition(out Vector3 firePoint))
+            {
+                frameBuffer.AddPoint(firePoint, DebugHudVisual.FirePoint);
+            }
         }
 #endif
 
-        private void TickObstacleCollision(GameSceneContext ctx)
+        private void TickObstacleCollision()
         {
             if (m_playerController.IsDestroyed)
             {
@@ -303,7 +500,6 @@ namespace GenjitsuLAB.STG
                 }
 
                 m_playerController.DestroyByDamage();
-                ctx.inputActions.Player.Disable();
                 return;
             }
         }
@@ -374,6 +570,32 @@ namespace GenjitsuLAB.STG
         private void OnSpawnerTriggered(StageEnemySpawner spawner)
         {
             m_enemyRuntime.TrySpawn(spawner);
+        }
+
+        private void OnBossSpawnerTriggered(StageBossSpawner spawner)
+        {
+            if (m_enemyRuntime.TrySpawn(spawner))
+            {
+                m_stageController.Pause(StageScrollPauseReason.Boss);
+            }
+        }
+
+        private void OnBossDefeated()
+        {
+            m_pendingBossDefeated = true;
+        }
+
+        private void OnPlayerDestroyed()
+        {
+            m_pendingPlayerDestroyed = true;
+        }
+
+        private void OnPickupCollected(PickupType pickupType)
+        {
+            if (pickupType == PickupType.Test)
+            {
+                m_playerLifeState?.TryAddLives(1);
+            }
         }
 
         private void UnloadPendingStage(AsyncOperation operation)

@@ -17,6 +17,10 @@ namespace GenjitsuLAB.STG
         /// <summary>A boss sequence is holding the scroll.</summary>
         Boss = 1 << 2,
         /// <summary>An external system is holding the scroll.</summary>
-        External = 1 << 3
+        External = 1 << 3,
+        /// <summary>The player is completing a protected respawn entry.</summary>
+        PlayerRespawn = 1 << 4,
+        /// <summary>The stage has reached a terminal result.</summary>
+        Result = 1 << 5
     }
 }

@@ -14,6 +14,10 @@ namespace GenjitsuLAB.STG
         [SerializeField] private Rect m_pickupRecycleArea = new Rect(-6f, -1f, 12f, 11f);
         [SerializeField] private Rect m_enemyRecycleArea = new Rect(-6f, -1f, 12f, 11f);
         [SerializeField] private Rect m_bulletRecycleArea = new Rect(-6f, -1f, 12f, 11f);
+        [Min(0)]
+        [SerializeField] private int m_initialLifeCount = 3;
+        [Range(1, 99)]
+        [SerializeField] private int m_maximumLifeCount = 99;
         [SerializeField] private StageSetting m_initialStage;
 
         /// <summary>
@@ -47,6 +51,16 @@ namespace GenjitsuLAB.STG
         public Rect BulletRecycleArea => m_bulletRecycleArea;
 
         /// <summary>
+        /// Gets the number of lives available when a new game session starts.
+        /// </summary>
+        public int InitialLifeCount => m_initialLifeCount;
+
+        /// <summary>
+        /// Gets the maximum number of lives that may be held in one game session.
+        /// </summary>
+        public int MaximumLifeCount => m_maximumLifeCount;
+
+        /// <summary>
         /// Gets the stage loaded when gameplay starts.
         /// </summary>
         public StageSetting InitialStage => m_initialStage;
@@ -78,6 +92,8 @@ namespace GenjitsuLAB.STG
 
             m_enemyRecycleArea = EnsureContainsMovementArea(m_enemyRecycleArea);
             m_bulletRecycleArea = EnsureContainsMovementArea(m_bulletRecycleArea);
+            m_maximumLifeCount = Mathf.Clamp(m_maximumLifeCount, 1, 99);
+            m_initialLifeCount = Mathf.Clamp(m_initialLifeCount, 0, m_maximumLifeCount);
         }
 
         private Rect EnsureContainsMovementArea(Rect area)

@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 namespace GenjitsuLAB.STG.Tests
 {
@@ -141,9 +142,12 @@ namespace GenjitsuLAB.STG.Tests
 
             Type pickupType = RequireRuntimeType("GenjitsuLAB.STG.Pickup");
             Type playerType = RequireRuntimeType("GenjitsuLAB.STG.PlayerController");
+            Type lifeHudType = RequireRuntimeType("GenjitsuLAB.STG.PlayerLifeHud");
             for (int frameIndex = 0; frameIndex < 300; frameIndex++)
             {
-                if (FindActiveSceneComponent(pickupType) != null && FindActiveSceneComponent(playerType) != null)
+                if (FindActiveSceneComponent(pickupType) != null &&
+                    FindActiveSceneComponent(playerType) != null &&
+                    FindActiveSceneComponent(lifeHudType) != null)
                 {
                     break;
                 }
@@ -153,8 +157,12 @@ namespace GenjitsuLAB.STG.Tests
 
             Component pickup = FindSingleActiveSceneComponent(pickupType);
             Component player = FindSingleActiveSceneComponent(playerType);
+            Component lifeHud = FindSingleActiveSceneComponent(lifeHudType);
+            Text lifeCountText = lifeHud.GetComponentInChildren<Text>();
             Assert.That(pickup.transform.position.x, Is.EqualTo(0f).Within(0.0001f));
             Assert.That(pickup.transform.position.y, Is.InRange(7.8f, 8f));
+            Assert.That(lifeCountText, Is.Not.Null);
+            Assert.That(lifeCountText.text, Is.EqualTo("x 03"));
 
             EventInfo collectedEvent = playerType.GetEvent("PickupCollected");
             Type pickupEnumType = RequireRuntimeType("GenjitsuLAB.STG.PickupType");
@@ -174,6 +182,7 @@ namespace GenjitsuLAB.STG.Tests
             Assert.That(sink.Count, Is.EqualTo(1));
             Assert.That(Convert.ToInt32(sink.Value), Is.EqualTo(0));
             Assert.That(pickup.gameObject.activeSelf, Is.False);
+            Assert.That(lifeCountText.text, Is.EqualTo("x 04"));
             collectedEvent.RemoveEventHandler(player, handler);
 
             yield return new ExitPlayMode();

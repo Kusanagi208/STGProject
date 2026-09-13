@@ -1,0 +1,16 @@
+{
+  "states": {
+    "operational": {
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "action": "subtle four-phase red-magenta core brightness pulse with completely stable armor silhouette; seamless loop; no detached effects"
+    },
+    "damaged": {
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "action": "damaged darkened armor with small attached red-orange electrical spark flicker contained inside silhouette; stable wreck shape; seamless loop"
+    }
+  }
+}

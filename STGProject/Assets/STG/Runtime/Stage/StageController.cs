@@ -21,6 +21,7 @@ namespace GenjitsuLAB.STG
         private StageScrollLayer[] m_layers;
         private StageObstacle[] m_obstacles;
         private StageEnemySpawner[] m_spawners;
+        private StageBossSpawner[] m_bossSpawners;
         private StageScrollPauseReason m_pauseReasons;
         private bool m_completionRaised;
 
@@ -29,6 +30,9 @@ namespace GenjitsuLAB.STG
 
         /// <summary>Raised once for each enemy spawner crossing its activation line.</summary>
         public event Action<StageEnemySpawner> SpawnerTriggered;
+
+        /// <summary>Raised once for each boss spawner crossing its activation line.</summary>
+        public event Action<StageBossSpawner> BossSpawnerTriggered;
 
         /// <summary>Gets whether at least one scroll pause reason is active.</summary>
         public bool IsPaused => m_pauseReasons != StageScrollPauseReason.None;
@@ -56,6 +60,9 @@ namespace GenjitsuLAB.STG
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         /// <summary>Gets the authored stage spawners for runtime diagnostics.</summary>
         internal StageEnemySpawner[] Spawners => m_spawners;
+
+        /// <summary>Gets the authored boss spawners for runtime diagnostics.</summary>
+        internal StageBossSpawner[] BossSpawners => m_bossSpawners;
 #endif
 
         internal void Initialize()
@@ -71,6 +78,12 @@ namespace GenjitsuLAB.STG
             for (int index = 0; index < m_spawners.Length; index++)
             {
                 m_spawners[index].Initialize();
+            }
+
+            m_bossSpawners = m_gameplay.GetComponentsInChildren<StageBossSpawner>(true);
+            for (int index = 0; index < m_bossSpawners.Length; index++)
+            {
+                m_bossSpawners[index].Initialize();
             }
 
             ScrollDistance = 0f;
@@ -110,6 +123,15 @@ namespace GenjitsuLAB.STG
                 if (spawner.TryTrigger())
                 {
                     SpawnerTriggered?.Invoke(spawner);
+                }
+            }
+
+            for (int index = 0; index < m_bossSpawners.Length; index++)
+            {
+                StageBossSpawner spawner = m_bossSpawners[index];
+                if (spawner.TryTrigger())
+                {
+                    BossSpawnerTriggered?.Invoke(spawner);
                 }
             }
         }
