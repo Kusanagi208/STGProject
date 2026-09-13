@@ -1,0 +1,7 @@
+{
+    "name": "GenjitsuLAB.Data.Editor",
+    "rootNamespace": "GenjitsuLAB.Data.Editor",
+    "references": ["GenjitsuLAB.Core"],
+    "includePlatforms": ["Editor"],
+    "autoReferenced": true
+}

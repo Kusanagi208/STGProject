@@ -93,7 +93,7 @@ namespace GenjitsuLAB.STG.Tests
         }
 
         [UnityTest]
-        public IEnumerator MainScene_ConsumesLivesRespawnsSamePlayerAndStopsAtZero()
+        public IEnumerator MainScene_ConsumesLivesRespawnsWithoutStartNoticeAndStopsAtZero()
         {
             EditorSceneManager.OpenScene("Assets/STG/Scene/Main.unity");
             yield return new EnterPlayMode();
@@ -115,7 +115,7 @@ namespace GenjitsuLAB.STG.Tests
                 Assert.That(GetField(stageState, "m_playerController"), Is.SameAs(originalPlayer));
                 if (expectedLives > 0)
                 {
-                    yield return WaitForPhase(stageState, "Playing", 600);
+                    yield return WaitForRespawnWithoutStartNotice(stageState, engine, 600);
                 }
             }
 
@@ -186,6 +186,28 @@ namespace GenjitsuLAB.STG.Tests
             }
 
             Assert.Fail($"Stage phase did not become {expectedPhase}.");
+        }
+
+        private static IEnumerator WaitForRespawnWithoutStartNotice(
+            object stageState,
+            Component engine,
+            int maximumFrames)
+        {
+            Component flowHud = (Component)GetField(engine, "m_stageFlowHud");
+            for (int frame = 0; frame < maximumFrames; frame++)
+            {
+                string phase = GetField(stageState, "m_phase").ToString();
+                Assert.That(phase, Is.Not.EqualTo("StartNotice"));
+                if (phase == "Playing")
+                {
+                    Assert.That((bool)GetProperty(flowHud, "IsVisible"), Is.False);
+                    yield break;
+                }
+
+                yield return null;
+            }
+
+            Assert.Fail("Player respawn did not return directly to the Playing phase.");
         }
 
         private static object Invoke(object target, string methodName, params object[] arguments)

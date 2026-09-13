@@ -31,6 +31,18 @@ MonoBehaviour:
     y: -1
     width: 12
     height: 11
+  m_enemyRecycleArea:
+    serializedVersion: 2
+    x: -6
+    y: -1
+    width: 12
+    height: 11
+  m_bulletRecycleArea:
+    serializedVersion: 2
+    x: -6
+    y: -1
+    width: 12
+    height: 11
   m_initialLifeCount: 3
   m_maximumLifeCount: 99
   m_initialStage: {fileID: 11400000, guid: d9f08340621545df9e24fdcb045199b5, type: 2}

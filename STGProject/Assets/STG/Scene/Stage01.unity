@@ -1249,7 +1249,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c12a931cac2029c4690d1f471ac3b8ff, type: 3}
-  m_Name: ''
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GenjitsuLAB.STG.StageBossSpawner
   m_activationY: 9
 --- !u!1 &971340588

@@ -37,6 +37,7 @@ namespace GenjitsuLAB.STG
         private bool m_isExiting;
         private bool m_pendingPlayerDestroyed;
         private bool m_pendingBossDefeated;
+        private bool m_showStartAfterPlayerEntry;
         private int m_startNoticeRemainingTicks;
         private StageRunPhase m_phase;
 
@@ -54,6 +55,7 @@ namespace GenjitsuLAB.STG
             m_isExiting = false;
             m_pendingPlayerDestroyed = false;
             m_pendingBossDefeated = false;
+            m_showStartAfterPlayerEntry = false;
             m_phase = StageRunPhase.Loading;
             if (m_stageSetting == null || string.IsNullOrWhiteSpace(m_stageSetting.SceneName))
             {
@@ -123,6 +125,7 @@ namespace GenjitsuLAB.STG
             m_isReady = false;
             m_pendingPlayerDestroyed = false;
             m_pendingBossDefeated = false;
+            m_showStartAfterPlayerEntry = false;
             m_phase = StageRunPhase.Loading;
             ctx.StageFlowHud?.Hide();
         }
@@ -199,7 +202,7 @@ namespace GenjitsuLAB.STG
             }
             else
             {
-                BeginPlayerEntry(ctx, StageScrollPauseReason.StageStart);
+                BeginPlayerEntry(ctx, StageScrollPauseReason.StageStart, true);
             }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             ctx.debugHud?.Bind(this);
@@ -210,6 +213,14 @@ namespace GenjitsuLAB.STG
         {
             if (!m_playerController.TickEntry())
             {
+                return;
+            }
+
+            if (!m_showStartAfterPlayerEntry)
+            {
+                m_stageController.Resume(StageScrollPauseReason.PlayerRespawn);
+                ctx.inputActions.Player.Enable();
+                m_phase = StageRunPhase.Playing;
                 return;
             }
 
@@ -259,7 +270,10 @@ namespace GenjitsuLAB.STG
             TickPickups(ctx.gameSetting.PickupRecycleArea);
         }
 
-        private void BeginPlayerEntry(GameSceneContext ctx, StageScrollPauseReason pauseReason)
+        private void BeginPlayerEntry(
+            GameSceneContext ctx,
+            StageScrollPauseReason pauseReason,
+            bool showStartAfterEntry)
         {
             ctx.inputActions.Player.Disable();
             ctx.StageFlowHud?.Hide();
@@ -269,6 +283,7 @@ namespace GenjitsuLAB.STG
                 m_stageSetting.PlayerSpawnPosition,
                 m_stageSetting.PlayerEntrySpeedPerTick);
             m_pendingPlayerDestroyed = false;
+            m_showStartAfterPlayerEntry = showStartAfterEntry;
             m_phase = StageRunPhase.PlayerEntering;
         }
 
@@ -284,7 +299,7 @@ namespace GenjitsuLAB.STG
                 return;
             }
 
-            BeginPlayerEntry(ctx, StageScrollPauseReason.PlayerRespawn);
+            BeginPlayerEntry(ctx, StageScrollPauseReason.PlayerRespawn, false);
         }
 
         private void EnterGameOver(GameSceneContext ctx, StageEndReason reason)

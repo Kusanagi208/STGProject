@@ -1,0 +1,8 @@
+{
+    "name": "GenjitsuLAB.Data.Editor.Tests",
+    "rootNamespace": "GenjitsuLAB.Data.Editor.Tests",
+    "references": ["GenjitsuLAB.Core", "GenjitsuLAB.Data.Editor"],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"],
+    "autoReferenced": false
+}
