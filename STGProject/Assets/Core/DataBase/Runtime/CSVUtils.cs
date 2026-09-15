@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Text;
 using UnityEngine;
 
-namespace GenjitsuLAB.Core
+namespace GenjitsuLAB.Data
 {
     /// <summary>CSV parsing and invariant scalar conversion for authoring tools.</summary>
     public class CSVUtils
